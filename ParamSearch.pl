@@ -41,6 +41,7 @@ $PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";
 	}
 
         $experimentFolder = $PROJECTS_FOLDER.$project.$SLASH."Simulations".$SLASH.$experiment.$SLASH;
+        $untrainedNet = $experimentFolder."BlankNetwork.txt";
 
         # Build template parameter file from these
         my @dimension			= (32,32,32,32);
@@ -57,18 +58,18 @@ $PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";
 
         for($r = 0;$r < 4;$r++) {
 
-	        %esRegionSettings[$r]   =       ('dimension',           $dimension[$r],
-	                                          'depth',              $depth[$r],
-	                                          'fanInRadius',        $fanInRadius[$r],
-	                                          'fanInCount',         $fanInCount[$r],
-	                                          'learningrate',       $learningrate[$r],
-	                                          'eta',                $eta[$r],
-	                                          'sparsenessLevel',    $sparsenessLevel[$r],
-	                                          'sigmoidSlope',       $sigmoidSlope[$r],
-	                                          'inhibitoryRadius',   $inhibitoryRadius[$r],
-	                                          'inhibitoryContrast', $inhibitoryContrast[$r],
-	                                          'inhibitoryWidth',    $inhibitoryWidth[$r]
-	                                          );
+	        %esRegionSettings[$r]   = ('dimension',           $dimension[$r],
+                                            'depth',              $depth[$r],
+                                            'fanInRadius',        $fanInRadius[$r],
+                                            'fanInCount',         $fanInCount[$r],
+                                            'learningrate',       $learningrate[$r],
+                                            'eta',                $eta[$r],
+                                            'sparsenessLevel',    $sparsenessLevel[$r],
+                                            'sigmoidSlope',       $sigmoidSlope[$r],
+                                            'inhibitoryRadius',   $inhibitoryRadius[$r],
+                                            'inhibitoryContrast', $inhibitoryContrast[$r],
+                                            'inhibitoryWidth',    $inhibitoryWidth[$r]
+                                            );
         }
 
         # Generate all combinations of these parameters
@@ -79,34 +80,46 @@ $PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";
         # Generate the random string to slap in front of file names
 	my $random_string = &generate_random_string(4);
 
-	foreach() {
+        for my $e (@nrOfEpochs) {
+        	for my $t (@trainAtTimeStepMultiple) {
+                	for my $l (@learningRates) {
 
-        	# New folder for this iteration
-                $simulationFolder = $experimentFolder.$simulation.$SLASH;
-		$parameterFile = $simulationFolder."Parameters.txt";
+	                # Setup this combination of parameters
+	                %esRegionSettings[$r]{'learningrate'} = $l;
 
-                $networkFile = $experimentFolder."BlankNetwork.txt";
-                $networkFile = $simulationFolder."TrainedNetwork.txt";
+	                # New folder name for this iteration
+	                $simulation = $random_string . "_E" . $nrOfEpochs[$e] . "_T" . $trainAtTimeStepMultiple[$t] . "_L" . %esRegionSettings[$r]{'learningrate'};
+	                $simulationFolder = $experimentFolder.$simulation.$SLASH;
+	                $parameterFile = $simulationFolder."Parameters.txt";
 
-                if(!(-d $simulationFolder)) {
+                        if(!(-d $simulationFolder)) {
 
-                	# Make simulation folder
-	                print "Making new simulation folder: " . $simulationFolder . "\n";
-	                mkdir($experimentFolder, 0777) || print $!;
+                                # Make simulation folder
+                                print "Making new simulation folder: " . $simulationFolder . "\n";
+                                mkdir($simulationFolder, 0777) || print $!;
 
-                        # Make parameter file and write to simulation folder
-                        $result = makeParameterFile($nrOfEpochs[$e], $trainAtTimeStepMultiple[$t], %esRegionSettings[$r]);
+                                # Make parameter file and write to simulation folder
+                                $result = makeParameterFile($e, $t, @esRegionSettings);
 
-	                # Run Experiment
-	                system("./Run.pl ".$command." ".$parameterFile." ".$networkFile." ".$simulationFolder);
+                                open (MYFILE, '>>'.$parameterFile);
+                                print MYFILE $result;
+                                close (MYFILE);
 
+                                # Run training
+                                system("./Run.pl train ".$parameterFile." ".$untrainedNet." ".$experimentFolder." ".$simulationFolder);
 
-	        }
-                else {
-                        print "Could not make folder: " . $experimentFolder . "\n";
-                        exit;
+                                # Run test
+                                $trainedNet = $simulationFolder."TrainedNetwork.txt";
+                                system("./Run.pl test ".$parameterFile." ".$trainedNet." ".$experimentFolder." ".$simulationFolder);
+
+                        } else {
+
+                                print "Could not make folder: " . $simulationFolder . "\n";
+                                exit;
+                        }
+                	}
                 }
-	}
+        }
 
 	sub makeParameterFile {
 
