@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
         use strict;
-        use warning;
+        #use warning;
 
 # COMMAND LINE ARGUMENTS
 # $1: project name : e.g. VisBack
@@ -11,10 +11,10 @@
 # Setup
 ########################################################################################
 
-$SLASH = "/"; # Change to \ on windows
+my $SLASH = "/"; # Change to \ on windows
 
 #$PROJECTS_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/";
-$PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";
+my $PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";
 
 ########################################################################################
 
@@ -27,21 +27,20 @@ $PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";
 	        exit;
 	}
 
-	if($#ARGV >= 0) {
+        my $project;
+	if($#ARGV >= 0)
 	        $project = $ARGV[1];
-	} else {
+	else
 	        $project = "VisBack";
-	}
 
-	if($#ARGV >= 1) {
+        my $experiment;
+	if($#ARGV >= 1)
 	        $experiment = $ARGV[2];
-	}
-	else {
+	else
 	        $experiment = "1Object";
-	}
 
-        $experimentFolder = $PROJECTS_FOLDER.$project.$SLASH."Simulations".$SLASH.$experiment.$SLASH;
-        $untrainedNet = $experimentFolder."BlankNetwork.txt";
+        my $experimentFolder = $PROJECTS_FOLDER.$project.$SLASH."Simulations".$SLASH.$experiment.$SLASH;
+        my $untrainedNet = $experimentFolder."BlankNetwork.txt";
 
         # Build template parameter file from these
         my @dimension			= (32,32,32,32);
@@ -56,9 +55,10 @@ $PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";
         my @inhibitoryContrast		= (1.5,1.5,1.6,1.4);
         my @inhibitoryWidth		= (7,11,17,25);
 
-        for($r = 0;$r < 4;$r++) {
+        my @esRegionSettings;
+        for(my $r = 0;$r < 4;$r++) {
 
-	        %esRegionSettings[$r]   = ('dimension',           $dimension[$r],
+	        @esRegionSettings[$r]   = ('dimension',           $dimension[$r],
                                             'depth',              $depth[$r],
                                             'fanInRadius',        $fanInRadius[$r],
                                             'fanInCount',         $fanInCount[$r],
@@ -85,12 +85,15 @@ $PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";
                 	for my $l (@learningRates) {
 
 	                # Setup this combination of parameters
-	                %esRegionSettings[$r]{'learningrate'} = $l;
+                        for(my $r = 0;$r < 4;$r++)
+	                	@esRegionSettings[$r]{'learningrate'} = $l;
+
+                        my $simulationCode = "_E" . $e . "_T" . $t . "_L" . $l;
 
 	                # New folder name for this iteration
-	                $simulation = $random_string . "_E" . $nrOfEpochs[$e] . "_T" . $trainAtTimeStepMultiple[$t] . "_L" . %esRegionSettings[$r]{'learningrate'};
-	                $simulationFolder = $experimentFolder.$simulation.$SLASH;
-	                $parameterFile = $simulationFolder."Parameters.txt";
+	                my $simulation = $random_string . $simulationCode;
+	                my $simulationFolder = $experimentFolder.$simulation.$SLASH;
+	                my $parameterFile = $simulationFolder."Parameters.txt";
 
                         if(!(-d $simulationFolder)) {
 
@@ -99,7 +102,8 @@ $PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";
                                 mkdir($simulationFolder, 0777) || print $!;
 
                                 # Make parameter file and write to simulation folder
-                                $result = makeParameterFile($e, $t, @esRegionSettings);
+                                print "Writing new parameter file: ". $simulationCode ." \n";
+                                my $result = makeParameterFile($e, $t, @esRegionSettings);
 
                                 open (MYFILE, '>>'.$parameterFile);
                                 print MYFILE $result;
@@ -109,7 +113,7 @@ $PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";
                                 system("./Run.pl train ".$parameterFile." ".$untrainedNet." ".$experimentFolder." ".$simulationFolder);
 
                                 # Run test
-                                $trainedNet = $simulationFolder."TrainedNetwork.txt";
+                                my $trainedNet = $simulationFolder."TrainedNetwork.txt";
                                 system("./Run.pl test ".$parameterFile." ".$trainedNet." ".$experimentFolder." ".$simulationFolder);
 
                         } else {
@@ -123,11 +127,11 @@ $PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";
 
 	sub makeParameterFile {
 
-	        $nrOfEpochs = $_[0];
-	        $trainAtTimeStepMultiple = $_[1];
-	        @esRegionSettings = $_[2];
+	        my $nrOfEpochs = $_[0];
+	        my $trainAtTimeStepMultiple = $_[1];
+	        my @esRegionSettings = $_[2];
 
-	        $str =<< TEMPLATE;
+	        my $str =<< TEMPLATE;
 	                /*
 	                * VisBack parameter file
 	                *
@@ -283,7 +287,7 @@ $PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";
 
 
 	        my $length = scalar(@esRegionSettings);
-	        for ($r=0; $r < $length; $r++) {
+	        for (my $r=0; $r < $length; $r++) {
 
 	                $str = $str . "{\n";
 	                $str = $str . "dimension                               = ". $esRegionSettings[$r]{"dimension"} .";\n";
