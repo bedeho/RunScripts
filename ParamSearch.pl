@@ -28,16 +28,20 @@ my $PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";
 	}
 
         my $project;
-	if($#ARGV >= 0)
+	if($#ARGV >= 0) {
 	        $project = $ARGV[1];
-	else
-	        $project = "VisBack";
+        }
+	else {
+        	$project = "VisBack";
+        }
 
         my $experiment;
-	if($#ARGV >= 1)
+	if($#ARGV >= 1) {
 	        $experiment = $ARGV[2];
-	else
+        }
+	else {
 	        $experiment = "1Object";
+        }
 
         my $experimentFolder = $PROJECTS_FOLDER.$project.$SLASH."Simulations".$SLASH.$experiment.$SLASH;
         my $untrainedNet = $experimentFolder."BlankNetwork.txt";
@@ -58,17 +62,17 @@ my $PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";
         my @esRegionSettings;
         for(my $r = 0;$r < 4;$r++) {
 
-	        @esRegionSettings[$r]   = ('dimension',           $dimension[$r],
-                                            'depth',              $depth[$r],
-                                            'fanInRadius',        $fanInRadius[$r],
-                                            'fanInCount',         $fanInCount[$r],
-                                            'learningrate',       $learningrate[$r],
-                                            'eta',                $eta[$r],
-                                            'sparsenessLevel',    $sparsenessLevel[$r],
-                                            'sigmoidSlope',       $sigmoidSlope[$r],
-                                            'inhibitoryRadius',   $inhibitoryRadius[$r],
-                                            'inhibitoryContrast', $inhibitoryContrast[$r],
-                                            'inhibitoryWidth',    $inhibitoryWidth[$r]
+	        @esRegionSettings[$r]   = ('dimension'		=>	$dimension[$r],
+                                            'depth'		=>	$depth[$r],
+                                            'fanInRadius'	=>      $fanInRadius[$r],
+                                            'fanInCount'	=>      $fanInCount[$r],
+                                            'learningrate'	=>      $learningrate[$r],
+                                            'eta'		=>      $eta[$r],
+                                            'sparsenessLevel'	=>    	$sparsenessLevel[$r],
+                                            'sigmoidSlope'	=>	$sigmoidSlope[$r],
+                                            'inhibitoryRadius'	=>   	$inhibitoryRadius[$r],
+                                            'inhibitoryContrast'=> 	$inhibitoryContrast[$r],
+                                            'inhibitoryWidth'	=>    	$inhibitoryWidth[$r]
                                             );
         }
 
@@ -85,8 +89,9 @@ my $PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";
                 	for my $l (@learningRates) {
 
 	                # Setup this combination of parameters
-                        for(my $r = 0;$r < 4;$r++)
-	                	@esRegionSettings[$r]{'learningrate'} = $l;
+                        for my %es (@esRegionSettings) {
+	                	%es{'learningrate'} = $l;
+                       	}
 
                         my $simulationCode = "_E" . $e . "_T" . $t . "_L" . $l;
 
