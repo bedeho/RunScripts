@@ -1,11 +1,14 @@
 #!/usr/bin/perl
 
-        use strict;
+        #use strict;
         #use warning;
+
+        use Data::Dumper;
 
 # COMMAND LINE ARGUMENTS
 # $1: project name : e.g. VisBack
 # $2: experiment name: e.g. Working
+# $3: randomize names (yes/no), default is yes
 
 ########################################################################################
 # Setup
@@ -24,6 +27,7 @@ my $PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";
 	        print "Usage:\n";
 	        print "Arg. 1: project name, default is VisBack\n";
 	        print "Arg. 2: experiment name, default is 1Object\n";
+                print "Arg. 3: randomize names (yes/no), default is yes\n";
 	        exit;
 	}
 
@@ -41,6 +45,12 @@ my $PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";
         }
 	else {
 	        $experiment = "1Object";
+        }
+
+        # Generate the random string to slap in front of file names
+        my $random_string = &generate_random_string(4);
+        if($#ARGV >= 2 && $ARGV[2] == "no") {
+	        $random_string = "";
         }
 
         my $experimentFolder = $PROJECTS_FOLDER.$project.$SLASH."Simulations".$SLASH.$experiment.$SLASH;
@@ -63,18 +73,20 @@ my $PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";
         my @esRegionSettings;
         for(my $r = 0;$r < $pathWayLength;$r++) {
 
-	        @esRegionSettings[$r]   = ('dimension'		=>	$dimension[$r],
-                                            'depth'		=>	$depth[$r],
-                                            'fanInRadius'	=>      $fanInRadius[$r],
-                                            'fanInCount'	=>      $fanInCount[$r],
-                                            'learningrate'	=>      $learningrate[$r],
-                                            'eta'		=>      $eta[$r],
-                                            'sparsenessLevel'	=>    	$sparsenessLevel[$r],
-                                            'sigmoidSlope'	=>	$sigmoidSlope[$r],
-                                            'inhibitoryRadius'	=>   	$inhibitoryRadius[$r],
-                                            'inhibitoryContrast'=> 	$inhibitoryContrast[$r],
-                                            'inhibitoryWidth'	=>    	$inhibitoryWidth[$r]
-                                            );
+	        %region   = ('dimension'          =>      $dimension[$r],
+                             'depth'             =>      $depth[$r],
+                             'fanInRadius'       =>      $fanInRadius[$r],
+                             'fanInCount'        =>      $fanInCount[$r],
+                             'learningrate'      =>      $learningrate[$r],
+                             'eta'               =>      $eta[$r],
+                             'sparsenessLevel'   =>      $sparsenessLevel[$r],
+                             'sigmoidSlope'      =>      $sigmoidSlope[$r],
+                             'inhibitoryRadius'  =>      $inhibitoryRadius[$r],
+                             'inhibitoryContrast'=>      $inhibitoryContrast[$r],
+                             'inhibitoryWidth'   =>      $inhibitoryWidth[$r]
+                             );
+
+               push @esRegionSettings, \%region;
         }
 
         # Generate all combinations of these parameters
@@ -82,22 +94,38 @@ my $PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";
         my @trainAtTimeStepMultiple	= (1,4);
         my @learningRates 		= (0.05,0.1,0.5,1,2,4,10);
 
-        # Generate the random string to slap in front of file names
-	my $random_string = &generate_random_string(4);
-
         for my $e (@nrOfEpochs) {
         	for my $t (@trainAtTimeStepMultiple) {
                 	for my $l (@learningRates) {
 
-	                # Setup this combination of parameters
-                        #for m
-                        #for my %es (%@esRegionSettings) {
-	                #	%es{'learningrate'} = $l;
-                       	#}
-
-                        for(my $r = 0;$r < $pathWayLength;$r++) {
-                        	$esRegionSettings[$r]{'learningrate'} = $l;
+                        my $i = 0;
+                        for $region ( @esRegionSettings ) {
+                        	#$region{'learningrate'} = $learningRates[$i];
+                                print $i . "\n";
+                                $i++;
                         }
+
+                        #for $region ( @esRegionSettings ) {
+                        #
+                        #
+                        #	print $region{'learningrate'};
+                                #exit
+                        #}
+
+                                                #        print %$region{'learningrate'};
+                        #        exit;
+	                    #for $role ( keys %$href ) {
+	                    #     print "$role=$href->{$role} ";
+	                    #}
+
+                        #print $r for my $r (@esRegionSettings);
+
+
+                        #for(my $r = 0;$r < $pathWayLength;$r++) {
+                        #	$esRegionSettings[$r]{'learningrate'} = $l;
+                        #}
+
+
 
                         my $simulationCode = "_E" . $e . "_T" . $t . "_L" . $l;
 
@@ -114,6 +142,7 @@ my $PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";
 
                                 # Make parameter file and write to simulation folder
                                 print "Writing new parameter file: ". $simulationCode ." \n";
+                                print scalar(@esRegionSettings) . "\n";
                                 my $result = makeParameterFile($e, $t, @esRegionSettings);
 
                                 open (MYFILE, '>>'.$parameterFile);
@@ -127,6 +156,8 @@ my $PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";
                                 my $trainedNet = $simulationFolder."TrainedNetwork.txt";
                                 system("./Run.pl test ".$parameterFile." ".$trainedNet." ".$experimentFolder." ".$simulationFolder);
 
+                                exit;
+
                         } else {
 
                                 print "Could not make folder: " . $simulationFolder . "\n";
@@ -138,11 +169,9 @@ my $PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";
 
 	sub makeParameterFile {
 
-	        my $nrOfEpochs = $_[0];
-	        my $trainAtTimeStepMultiple = $_[1];
-	        my @esRegionSettings = $_[2];
+                my ($nrOfEpochs, $trainAtTimeStepMultiple, @esRegionSettings) = @_;
 
-	        my $str = <<'TEMPLATE';
+	        my $str = <<"TEMPLATE";
 	                /*
 	                * VisBack parameter file
 	                *
@@ -228,7 +257,7 @@ my $PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";
 	                        * Restrict training in all layers to timesteps for a given transform
 	                        * that are multiples of this value (= 1 => every time step).
 	                        */
-	                        trainAtTimeStepMultiple =  " . $trainAtTimeStepMultiple . ";
+	                        trainAtTimeStepMultiple =  $trainAtTimeStepMultiple;
 	                };
 
 	                output: {
@@ -246,7 +275,7 @@ my $PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";
 	                stimuli: {
 	                        nrOfObjects     = 1; /* Number of objects, is not used directly, but rather dumped into output files for matlab convenience */
 	                        nrOfTransformations = 9; /* #transforms pr. object, is not used directly, but rather dumped into output files for matlab convenience  */
-	                        nrOfEpochs = " . $nrOfEpochs . "; /* An epoch is one run through the file list, and the number of epochs can be no less then 1 */
+	                        nrOfEpochs = $nrOfEpochs; /* An epoch is one run through the file list, and the number of epochs can be no less then 1 */
 	                };
 
 	                v1: {
@@ -295,23 +324,28 @@ my $PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";
 
 	                extrastriate: (
 TEMPLATE
-	        my $length = scalar(@esRegionSettings);
-	        for (my $r=0; $r < $length; $r++) {
 
-	                $str = $str . "{\n";
-	                $str = $str . "dimension                               = ". $esRegionSettings[$r]{"dimension"} .";\n";
-	                $str = $str . "depth                                   = ". $esRegionSettings[$r]{"depth"} .";\n";
-	                $str = $str . "fanInRadius                             = ". $esRegionSettings[$r]{"fanInRadius"} .";\n";
-	                $str = $str . "fanInCount                              = ". $esRegionSettings[$r]{"fanInCount"} .";\n";
-	                $str = $str . "learningrate                            = ". $esRegionSettings[$r]{"learningrate"} .";\n";
-	                $str = $str . "eta                                     = ". $esRegionSettings[$r]{"eta"} .";\n";
-	                $str = $str . "sparsenessLevel                         = ". $esRegionSettings[$r]{"sparsenessLevel"} .";\n";
-	                $str = $str . "sigmoidSlope                            = ". $esRegionSettings[$r]{"sigmoidSlope"} .";\n";
-	                $str = $str . "inhibitoryRadius                        = ". $esRegionSettings[$r]{"inhibitoryRadius"} .";\n";
-	                $str = $str . "inhibitoryContrast                      = ". $esRegionSettings[$r]{"inhibitoryContrast"} .";\n";
-	                $str = $str . "inhibitoryWidth                         = ". $esRegionSettings[$r]{"inhibitoryWidth"} .";\n";
+
+
+               	#print Dumper(@esRegionSettings);
+                #print scalar(@esRegionSettings);
+
+                for $region ( @esRegionSettings ) {
+
+                	$str = $str . "{\n";
+	                $str = $str . "dimension                               = ". $region{"dimension"} .";\n";
+	                $str = $str . "depth                                   = ". $region{"depth"} .";\n";
+	                $str = $str . "fanInRadius                             = ". $region{"fanInRadius"} .";\n";
+	                $str = $str . "fanInCount                              = ". $region{"fanInCount"} .";\n";
+	                $str = $str . "learningrate                            = ". $region{"learningrate"} .";\n";
+	                $str = $str . "eta                                     = ". $region{"eta"} .";\n";
+	                $str = $str . "sparsenessLevel                         = ". $region{"sparsenessLevel"} .";\n";
+	                $str = $str . "sigmoidSlope                            = ". $region{"sigmoidSlope"} .";\n";
+	                $str = $str . "inhibitoryRadius                        = ". $region{"inhibitoryRadius"} .";\n";
+	                $str = $str . "inhibitoryContrast                      = ". $region{"inhibitoryContrast"} .";\n";
+	                $str = $str . "inhibitoryWidth                         = ". $region{"inhibitoryWidth"} .";\n";
 	                $str = $str . "},\n";
-	        }
+                }
 
 	        # Cut away last ',' and add on closing paranthesis and semi-colon
 	        $str = substr($str,1,-1) . " );";

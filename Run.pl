@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
-        use strict;
-        use warning;
+        #use strict;
+        #use warning;
 
 # COMMAND LINE ARGUMENTS
 # $1: command
