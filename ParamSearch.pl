@@ -23,7 +23,7 @@ my $PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";
 	        print "To few arguments passed.\n";
 	        print "Usage:\n";
 	        print "Arg. 1: project name, default is VisBack\n";
-	        print "Arg. 2: experiment name, default is Working\n";
+	        print "Arg. 2: experiment name, default is 1Object\n";
 	        exit;
 	}
 
@@ -47,6 +47,7 @@ my $PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";
         my $untrainedNet = $experimentFolder."BlankNetwork.txt";
 
         # Build template parameter file from these
+        my $pathWayLength		= 4;
         my @dimension			= (32,32,32,32);
         my @depth			= (1,1,1,1);
         my @fanInRadius 		= (6,6,9,12);
@@ -60,7 +61,7 @@ my $PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";
         my @inhibitoryWidth		= (7,11,17,25);
 
         my @esRegionSettings;
-        for(my $r = 0;$r < 4;$r++) {
+        for(my $r = 0;$r < $pathWayLength;$r++) {
 
 	        @esRegionSettings[$r]   = ('dimension'		=>	$dimension[$r],
                                             'depth'		=>	$depth[$r],
@@ -89,9 +90,14 @@ my $PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";
                 	for my $l (@learningRates) {
 
 	                # Setup this combination of parameters
-                        for my %es (@esRegionSettings) {
-	                	%es{'learningrate'} = $l;
-                       	}
+                        #for m
+                        #for my %es (%@esRegionSettings) {
+	                #	%es{'learningrate'} = $l;
+                       	#}
+
+                        for(my $r = 0;$r < $pathWayLength;$r++) {
+                        	$esRegionSettings[$r]{'learningrate'} = $l;
+                        }
 
                         my $simulationCode = "_E" . $e . "_T" . $t . "_L" . $l;
 
@@ -136,7 +142,7 @@ my $PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";
 	        my $trainAtTimeStepMultiple = $_[1];
 	        my @esRegionSettings = $_[2];
 
-	        my $str =<< TEMPLATE;
+	        my $str = <<'TEMPLATE';
 	                /*
 	                * VisBack parameter file
 	                *
@@ -288,9 +294,7 @@ my $PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";
 	                */
 
 	                extrastriate: (
-	                TEMPLATE
-
-
+TEMPLATE
 	        my $length = scalar(@esRegionSettings);
 	        for (my $r=0; $r < $length; $r++) {
 
