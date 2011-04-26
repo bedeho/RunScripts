@@ -79,7 +79,14 @@ $MATLAB = "matlab -nojvm -nodisplay -nosplash ";
 	} else {
 
 	        if($command eq "test") {
-	                $networkFile = $simulationFolder."TrainedNetwork.txt";
+
+                	if($#ARGV >= 4) {
+	                        $network = $ARGV[4];
+	                } else {
+	                        $network = "TrainedNetwork";
+	                }
+
+	                $networkFile = $simulationFolder.$network.".txt";
 	                system($PROGRAM." ".$command." ".$parameterFile." ".$networkFile." ".$experimentFolder." ".$simulationFolder);
 
                         # Do plot of top region
@@ -103,7 +110,7 @@ $MATLAB = "matlab -nojvm -nodisplay -nosplash ";
 
 	        # Cleanup
 	        if($command eq "test") {
-	                $destinationFolder = $simulationFolder."Testing";
+	                $destinationFolder = $simulationFolder.$network;
 	        }
 	        elsif($command eq "train") {
 	                $destinationFolder = $simulationFolder."Training";

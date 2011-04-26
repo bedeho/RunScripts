@@ -239,8 +239,8 @@ output: {
 	/*
 	* Parameters controlling what values to output,what layers is governed by "output" parameter in each layer.
 	*/
-
-	weights = false;
+	outputNeurons = true;
+	outputWeights = false;
 	outputAtTimeStepMultiple = 1;
 
 	/*
@@ -248,8 +248,8 @@ output: {
 	* as independent network files
 	*/
 	saveNetwork = true;
-	saveNetworkAtEpochMultiple = 5;
-	saveNetworkAtTransformMultiple = 1;
+	saveNetworkAtEpochMultiple = 10;
+	saveNetworkAtTransformMultiple = 3;
 };
 
 stimuli: {
