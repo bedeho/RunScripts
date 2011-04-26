@@ -236,16 +236,20 @@ training: {
 };
 
 output: {
-        /*
-        * Parameters controlling what values to output,what layers is governed by "output" parameter in each layer. */
-        /*
-        firingRate = true;
-        inhibitedActivation = false;
-        activation = true;
-        */
-        weights = true;
-        outputAtTimeStepMultiple = 4;
-        saveNetworkAtEpochMultiple = 5;
+	/*
+	* Parameters controlling what values to output,what layers is governed by "output" parameter in each layer.
+	*/
+
+	weights = false;
+	outputAtTimeStepMultiple = 1;
+
+	/*
+	* Saving intermediate network states
+	* as independent network files
+	*/
+	saveNetwork = true;
+	saveNetworkAtEpochMultiple = 5;
+	saveNetworkAtTransformMultiple = 1;
 };
 
 stimuli: {
