@@ -1,10 +1,5 @@
 #!/usr/bin/perl
 
-        #use strict;
-        #use warning;
-
-        use Data::Dumper;
-
 # COMMAND LINE ARGUMENTS
 # $1: project name : e.g. VisBack
 # $2: experiment name: e.g. Working
@@ -19,7 +14,7 @@ my $SLASH = "/"; # Change to \ on windows
 #$PROJECTS_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/";
 my $PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";
 
-my $PERL_COMMAND = "C:\MinGW\msys\1.0\bin\perl.exe";
+my $PERL_RUN_SCRIPT = "C:/MinGW/msys/1.0/home/Mender/Run.pl";
 
 ########################################################################################
 
@@ -35,7 +30,7 @@ my $PERL_COMMAND = "C:\MinGW\msys\1.0\bin\perl.exe";
 
         my $project;
 	if($#ARGV >= 0) {
-	        $project = $ARGV[1];
+	        $project = $ARGV[0];
         }
 	else {
         	$project = "VisBack";
@@ -43,7 +38,7 @@ my $PERL_COMMAND = "C:\MinGW\msys\1.0\bin\perl.exe";
 
         my $experiment;
 	if($#ARGV >= 1) {
-	        $experiment = $ARGV[2];
+	        $experiment = $ARGV[1];
         }
 	else {
 	        $experiment = "1Object";
@@ -109,8 +104,10 @@ my $PERL_COMMAND = "C:\MinGW\msys\1.0\bin\perl.exe";
 
 	                # New folder name for this iteration
 	                my $simulation = $random_string . $simulationCode;
-	                my $simulationFolder = $experimentFolder.$simulation.$SLASH;
-	                my $parameterFile = $simulationFolder."Parameters.txt";
+
+                       	my $experimentFolder = $PROJECTS_FOLDER.$project.$SLASH."Simulations".$SLASH.$experiment.$SLASH;
+			my $simulationFolder = $experimentFolder.$simulation.$SLASH;
+                        my $parameterFile = $simulationFolder."Parameters.txt";
 
                         if(!(-d $simulationFolder)) {
 
@@ -127,16 +124,11 @@ my $PERL_COMMAND = "C:\MinGW\msys\1.0\bin\perl.exe";
                                 close (MYFILE);
 
                                 # Run training
-                                system($PERL_COMMAND ." Run.pl train ".$parameterFile." ".$untrainedNet." ".$experimentFolder." ".$simulationFolder);
+                                system($PERL_RUN_SCRIPT, "train", $project, $experiment, $simulation);
 
                                 # Run test
-                                my $trainedNet = $simulationFolder."TrainedNetwork.txt";
-                                system($PERL_COMMAND ." Run.pl test ".$parameterFile." ".$trainedNet." ".$experimentFolder." ".$simulationFolder);
-
-                                exit;
-
+                                system($PERL_RUN_SCRIPT, "test", $project, $experiment, $simulation);
                         } else {
-
                                 print "Could not make folder: " . $simulationFolder . "\n";
                                 exit;
                         }
@@ -154,9 +146,9 @@ my $PERL_COMMAND = "C:\MinGW\msys\1.0\bin\perl.exe";
 	        my $str = <<"TEMPLATE";
 /*
 *
-* GENERATED IN ParamSearch.pl:
+* GENERATED IN ParamSearch.pl on $stamp
 *
-* VisBack parameter file: $stamp
+* VisBack parameter file
 *
 * Created by Bedeho Mender on 02/02/11.
 * Copyright 2010 OFTNAI. All rights reserved.
@@ -240,7 +232,7 @@ training: {
         * Restrict training in all layers to timesteps for a given transform
         * that are multiples of this value (= 1 => every time step).
         */
-        trainAtTimeStepMultiple =  $trainAtTimeStepMultiple;
+        trainAtTimeStepMultiple = $trainAtTimeStepMultiple;
 };
 
 output: {
@@ -253,10 +245,11 @@ output: {
         */
         weights = true;
         outputAtTimeStepMultiple = 4;
+        saveNetworkAtEpochMultiple = 5;
 };
 
 stimuli: {
-        nrOfObjects     = 1; /* Number of objects, is not used directly, but rather dumped into output files for matlab convenience */
+        nrOfObjects = 1; /* Number of objects, is not used directly, but rather dumped into output files for matlab convenience */
         nrOfTransformations = 9; /* #transforms pr. object, is not used directly, but rather dumped into output files for matlab convenience  */
         nrOfEpochs = $nrOfEpochs; /* An epoch is one run through the file list, and the number of epochs can be no less then 1 */
 };
@@ -281,6 +274,7 @@ v1: {
                 /* lambda is a the param, count is the number of V2 projections from each wavelength (subsampling) */
                 /* Visnet values for count: 201,50,13,8 */
                 wavelengths = ( {lambda = 4; fanInCount = 201;} );
+	};
 };
 
 /*

@@ -1,8 +1,5 @@
 #!/usr/bin/perl
 
-        #use strict;
-        #use warning;
-
 # COMMAND LINE ARGUMENTS
 # $1: command
 # * build
@@ -26,6 +23,10 @@ chdir("d:/Oxford/Work/VisBack/Release");
 # Must have trailing slash in path
 #$PROJECTS_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/";
 $PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";
+
+$SCRIPT_FOLDER = "D:/Oxford/Work/Projects/VisBack/VisBackScripts/";
+
+$MATLAB = "matlab -nojvm -nodisplay -nosplash ";
 
 ########################################################################################
 
@@ -75,18 +76,20 @@ $PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";
 
 	        system($PROGRAM." build ".$parameterFile." ".$experimentFolder);
 
-	        # print $PROGRAM." build ".$parameterFile." ".$experimentFolder;
-
 	} else {
 
 	        if($command eq "test") {
 	                $networkFile = $simulationFolder."TrainedNetwork.txt";
 	                system($PROGRAM." ".$command." ".$parameterFile." ".$networkFile." ".$experimentFolder." ".$simulationFolder);
 
+                        # Do plot of top region
+                        # chdir($SCRIPT_FOLDER);
+                        # $firingRateFile = $simulationFolder."firingRate.dat";
+                        #system($MATLAB . " -r plotRegionHistory('".$firingRateFile."', 5)");
+                        # print $MATLAB . " -r plotRegionHistory('".$firingRateFile."', 5)";
 	        } elsif($command eq "train") {
 	                $networkFile = $experimentFolder."BlankNetwork.txt";
 	                system($PROGRAM." ".$command." ".$parameterFile." ".$networkFile." ".$experimentFolder." ".$simulationFolder);
-
 	        } elsif ($command eq "loadtest") {
 
 	                # Add md5 test here
