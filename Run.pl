@@ -1,43 +1,30 @@
 #!/usr/bin/perl
 
-# COMMAND LINE ARGUMENTS
-# $1: command
-# * build
-# * train
-# * test
-# * loadtest
-# $2: project name : e.g. VisBack
-# $3: experiment name: e.g. Working
-# $4: simulation name: e.g. 20Epoch
-
-########################################################################################
-# Setup
-########################################################################################
-
- # Change to \ on windows
-
-# office
-$PROGRAM = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/VisBack/build/Release/VisBack";
-$PROJECTS_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/"; # must have trailing slash
-$SCRIPT_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/Scripts/VisBackMatlabScripts/";  # must have trailing slash
-$SLASH = "/";
-
-# laptop
-#$PROGRAM = "VisBack.exe";
-#chdir("d:/Oxford/Work/VisBack/Release");
-#$PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";  # must have trailing slash
-#$SCRIPT_FOLDER = "D:/Oxford/Work/Projects/VisBack/VisBackScripts/";  # must have trailing slash
-#$SLASH = "/";
- 
-$MATLAB = "matlab -nojvm -nodisplay -nosplash ";
-
-########################################################################################
+	########################################################################################
+	# VARS
+	########################################################################################
+	
+	# office
+	$PROGRAM = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/VisBack/build/Release/VisBack";
+	$PROJECTS_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/"; # must have trailing slash
+	$SCRIPT_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/Scripts/VisBackMatlabScripts/";  # must have trailing slash
+	$SLASH = "/";
+	
+	# laptop
+	#$PROGRAM = "VisBack.exe";
+	#chdir("d:/Oxford/Work/VisBack/Release");
+	#$PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";  # must have trailing slash
+	#$SCRIPT_FOLDER = "D:/Oxford/Work/Projects/VisBack/VisBackScripts/";  # must have trailing slash
+	#$SLASH = "/";
+	 
+	$MATLAB = "matlab -nojvm -nodisplay -nosplash ";
+	
+	########################################################################################
 
 	if($#ARGV < 0) {
 
 	        print "To few arguments passed.\n";
 	        print "Usage:\n";
-	        # print " * new simulation\n";
 	        print " * build\n";
 	        print " * train\n";
 	        print " * test\n";
@@ -91,8 +78,7 @@ $MATLAB = "matlab -nojvm -nodisplay -nosplash ";
 	                        doTest($PROGRAM, $parameterFile, $ARGV[4], $experimentFolder, $simulationFolder);
 	                } else {
 	                        
-	                        # Call doTest() for all files with file name *Network.txt
-	                        # will include
+	                        # Call doTest() for all files with file name *Network.txt, this will include
 	                        # 1. trained net
 	                        # 2. intermediate nets
 	                        # 3. untrained control nets
@@ -128,9 +114,6 @@ $MATLAB = "matlab -nojvm -nodisplay -nosplash ";
 					
 					# Move result files into result folder
 			        system("mv ".$simulationFolder."*.dat ".$destinationFolder);
-				
-				    # Move network into result folder
-					system("mv $networkFile ".$destinationFolder);
 	
 	        } elsif ($command eq "loadtest") {
 
