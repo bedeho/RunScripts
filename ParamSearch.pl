@@ -17,11 +17,13 @@
 	# office
 	$PROJECTS_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/";  # must have trailing slash
 	$PERL_RUN_SCRIPT = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/RunScripts/Run.pl";
+	$PERL_PLOT_SCRIPT = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/RunScripts/Plotting.pl";
 	$SLASH = "/";
 	
 	# laptop
 	#$PROJECTS_FOLDER = "D:/Oxford/Work/Projects/";  # must have trailing slash
 	#$PERL_RUN_SCRIPT = "C:/MinGW/msys/1.0/home/Mender/Run.pl";
+	#$PERL_PLOT_SCRIPT = "C:/MinGW/msys/1.0/home/Mender/Plotting.pl";
 	#$SLASH = "/";
 	
 	########################################################################################
@@ -55,102 +57,118 @@
 	$simulationFolder = $experimentFolder.$simulation.$SLASH;
 	$parameterFile = $simulationFolder."Parameters.txt";
 
-       # Generate the random string to slap in front of file names
-       my $random_string = "";
-       if($#ARGV >= 2 && $ARGV[2] == "random") {
-        $random_string = &generate_random_string(4);
-       }
+    # Generate the random string to slap in front of file names
+    my $random_string = "";
+    if($#ARGV >= 2 && $ARGV[2] == "random") {
+     $random_string = &generate_random_string(4);
+    }
 
-       my $experimentFolder = $PROJECTS_FOLDER.$project.$SLASH."Simulations".$SLASH.$experiment.$SLASH;
-       my $untrainedNet = $experimentFolder."BlankNetwork.txt";
+    my $experimentFolder = $PROJECTS_FOLDER.$project.$SLASH."Simulations".$SLASH.$experiment.$SLASH;
+    my $untrainedNet = $experimentFolder."BlankNetwork.txt";
 
-       # Build template parameter file from these
-       my $pathWayLength		= 4;
-       my @dimension			= (32,32,32,32);
-       my @depth			= (1,1,1,1);
-       my @fanInRadius 		= (6,6,9,12);
-       my @fanInCount 			= (100,100,100,100);
-       my @learningrate		= ("0.1","0.1","0.1","0.1");
-       my @eta				= ("0.8","0.8","0.8","0.8");
-       my @sparsenessLevel		= ("0.98","0.98","0.98","0.98");
-       my @sigmoidSlope 		= ("190.0","40.0","75.0","26.0");
-       my @inhibitoryRadius		= ("1.38","2.7","4.0","6.0");
-       my @inhibitoryContrast		= ("1.5","1.5","1.6","1.4");
-       my @inhibitoryWidth		= (7,11,17,25);
+    # Build template parameter file from these
+    my $pathWayLength		= 4;
+    my @dimension			= (32,32,32,32);
+    my @depth				= (1,1,1,1);
+    my @fanInRadius 		= (6,6,9,12);
+    my @fanInCount 			= (100,100,100,100);
+    my @learningrate		= ("0.1","0.1","0.1","0.1");
+    my @eta					= ("0.8","0.8","0.8","0.8");
+    my @sparsenessLevel		= ("0.98","0.98","0.98","0.98");
+    my @sigmoidSlope 		= ("190.0","40.0","75.0","26.0");
+    my @inhibitoryRadius	= ("1.38","2.7","4.0","6.0");
+    my @inhibitoryContrast	= ("1.5","1.5","1.6","1.4");
+    my @inhibitoryWidth		= (7,11,17,25);
 
-       my @esRegionSettings;
-       for(my $r = 0;$r < $pathWayLength;$r++) {
+    my @esRegionSettings;
+   	for(my $r = 0;$r < $pathWayLength;$r++) {
 
-        %region   = ('dimension'          =>      $dimension[$r],
-                            'depth'             =>      $depth[$r],
-                            'fanInRadius'       =>      $fanInRadius[$r],
-                            'fanInCount'        =>      $fanInCount[$r],
-                            'learningrate'      =>      $learningrate[$r],
-                            'eta'               =>      $eta[$r],
-                            'sparsenessLevel'   =>      $sparsenessLevel[$r],
-                            'sigmoidSlope'      =>      $sigmoidSlope[$r],
-                            'inhibitoryRadius'  =>      $inhibitoryRadius[$r],
-                            'inhibitoryContrast'=>      $inhibitoryContrast[$r],
-                            'inhibitoryWidth'   =>      $inhibitoryWidth[$r]
-                            );
+     	%region   	= ('dimension'          =>      $dimension[$r],
+                         'depth'             =>      $depth[$r],
+                         'fanInRadius'       =>      $fanInRadius[$r],
+                         'fanInCount'        =>      $fanInCount[$r],
+                         'learningrate'      =>      $learningrate[$r],
+                         'eta'               =>      $eta[$r],
+                         'sparsenessLevel'   =>      $sparsenessLevel[$r],
+                         'sigmoidSlope'      =>      $sigmoidSlope[$r],
+                         'inhibitoryRadius'  =>      $inhibitoryRadius[$r],
+                         'inhibitoryContrast'=>      $inhibitoryContrast[$r],
+                         'inhibitoryWidth'   =>      $inhibitoryWidth[$r]
+                         );
 
-              push @esRegionSettings, \%region;
-       }
+           push @esRegionSettings, \%region;
+    }
 
-       # Generate all combinations of these parameters
-       my @nrOfEpochs			= (800);
-       my @trainAtTimeStepMultiple	= (4);
-       my @learningRates 		= ("0.01","0.1","0.5","1.0");
-       my @sparsenessLevel		= ("0.65","0.75","0.85","0.90");
+    # Generate all combinations of these parameters
+    # GENERALIZE THIS LOUSY CODE !!! LATER USING ASSOCIATIVE ARRAYS
+    # AND PARTITIONING PARAMS INTO GENERAL AND LAYER PARAMS
+    
+    my @nrOfEpochs			= (800);
+    my @trainAtTimeStepMultiple	= (4);
+    my @learningRates 		= ("0.01", "0.05", "0.1", "0.5", "1.0", "2.0", "4.0", "10.0");
+    my @sparsenessLevel		= ("0.65", "0.75", "0.85", "0.90", "0.95", "0.98", "0.99");
+    my @timeStepsPrInputFile = (4);
+    my @useInhibition		= ("true","false");
+    my @resetTrace			= ("true","false");
 
 	for my 	$e (@nrOfEpochs) {
 		for my $t (@trainAtTimeStepMultiple) {
-			for my $l (@learningRates) {
-				for my $s (@sparsenessLevel) {
-					
-					for $region ( @esRegionSettings ) {
-						$region{'learningrate'} = $l;
-						$region{'sparsenessLevel'} = $s;
-					}
-					
-					my $simulationCode = "_E" . $e . "_T" . $t . "_L" . $l . "_S" . $s;
-					
-					# New folder name for this iteration
-					my $simulation = $random_string . $simulationCode;
-					
-					my $experimentFolder = $PROJECTS_FOLDER.$project.$SLASH."Simulations".$SLASH.$experiment.$SLASH;
-					my $simulationFolder = $experimentFolder.$simulation.$SLASH;
-					my $parameterFile = $simulationFolder."Parameters.txt";
-					
-					my $blankNetworkSRC = $simulationFolder."BlankNetwork.txt";
-					my $blankNetworkDEST = $experimentFolder."BlankNetwork.txt";
-					
-					if(!(-d $simulationFolder)) {
-						
-						# Make simulation folder
-						print "Making new simulation folder: " . $simulationFolder . "\n";
-						mkdir($simulationFolder, 0777) || print $!;
-						
-						# Make parameter file and write to simulation folder
-						print "Writing new parameter file: ". $simulationCode ." \n";
-						my $result = makeParameterFile($e, $t, @esRegionSettings);
-						
-						# Copy blank network into folder so that we can do control test automatically
-						print "Copying blank network: ". $blankNetworkDEST . " \n";
-						copy($blankNetworkSRC, $blankNetworkDEST) or die "Copying blank network failed: $!";
-													
-						open (MYFILE, '>>'.$parameterFile);
-						print MYFILE $result;
-						close (MYFILE);
-						
-						# Run training
-						system($PERL_RUN_SCRIPT, "train", $project, $experiment, $simulation);
-						
-						# Run test
-						system($PERL_RUN_SCRIPT, "test", $project, $experiment, $simulation);
-					} else {
-						print "Could not make folder: " . $simulationFolder . "\n";
-						exit;
+			for my $tPrFile (@timeStepsPrInputFile) {
+				for my $ui (@useInhibition) {
+					for my $rt (@resetTrace) {
+						for my $l (@learningRates) {
+							for my $s (@sparsenessLevel) {
+								
+								for $region ( @esRegionSettings ) {
+									$region{'learningrate'} = $l;
+									$region{'sparsenessLevel'} = $s;
+								}
+								
+								my $simulationCode = "_E" . $e . "_T" . $t . "_Ti" . $tPrFile . "_I" . $ui . "_RT" . $rt . "_L" . $l . "_S" . $s;
+								
+								# New folder name for this iteration
+								my $simulation = $random_string . $simulationCode;
+								
+								my $experimentFolder = $PROJECTS_FOLDER.$project.$SLASH."Simulations".$SLASH.$experiment.$SLASH;
+								my $simulationFolder = $experimentFolder.$simulation.$SLASH;
+								my $parameterFile = $simulationFolder."Parameters.txt";
+								
+								my $blankNetworkSRC = $simulationFolder."BlankNetwork.txt";
+								my $blankNetworkDEST = $experimentFolder."BlankNetwork.txt";
+								
+								if(!(-d $simulationFolder)) {
+									
+									# Make simulation folder
+									print "Making new simulation folder: " . $simulationFolder . "\n";
+									mkdir($simulationFolder, 0777) || print $!;
+									
+									# Make parameter file and write to simulation folder
+									print "Writing new parameter file: ". $simulationCode ." \n";
+									my $result = makeParameterFile(@esRegionSettings, $e, $t, $tPrFile, $ui, $rt);
+									
+									# Copy blank network into folder so that we can do control test automatically
+									print "Copying blank network: ". $blankNetworkDEST . " \n";
+									copy($blankNetworkSRC, $blankNetworkDEST) or die "Copying blank network failed: $!";
+																
+									open (MYFILE, '>>'.$parameterFile);
+									print MYFILE $result;
+									close (MYFILE);
+									
+									# Run training
+									system($PERL_RUN_SCRIPT, "train", $project, $experiment, $simulation);
+									
+									# Run test
+									system($PERL_RUN_SCRIPT, "test", $project, $experiment, $simulation);
+									
+									# Run plotting
+									system($PERL_PLOT_SCRIPT, $project, $experiment, $simulation);
+									
+								} else {
+									print "Could not make folder: " . $simulationFolder . "\n";
+									exit;
+								}
+							}
+						}
 					}
 				}
 			}
@@ -159,7 +177,7 @@
 
 	sub makeParameterFile {
 
-		my ($nrOfEpochs, $trainAtTimeStepMultiple, @esRegionSettings) = @_;
+		my (@esRegionSettings, $nrOfEpochs, $trainAtTimeStepMultiple, $timeStepsPrInputFile, $useInhibition, $resetTrace) = @_;
 
         @timeData = localtime(time);
 		$stamp = join(' ', @timeData);
@@ -222,12 +240,12 @@
 		/*
 		* Whether or not to apply inhibition
 		*/
-		useInhibition = true;
+		useInhibition = $useInhibition;
 		
 		/* Number of time steps pr. input file, in practice MUST be at least the length of pathway (including v1)-1
 		   BE AWARE THAT IF THERE IS NO FEEDBACK, THEN THERE IS NO POINT IN HAVING THIS PARAM
 		   LARGER THEN SIZE OF EXTRA STRIATE PATHWAY.*/
-		timeStepsPrInputFile = 4;
+		timeStepsPrInputFile = $timeStepsPrInputFile;
 		
 		/*
 		* Only used in build command:
@@ -247,7 +265,7 @@
 		        /*
 		        * Whether or not to reset trace value
 		        */
-		        resetTrace = true;
+		        resetTrace = $resetTrace;
 		
 		        /*
 		        * Restrict training in all layers to timesteps for a given transform
@@ -269,14 +287,14 @@
 			* as independent network files
 			*/
 			saveNetwork = false;
-			saveNetworkAtEpochMultiple = 10;
-			saveNetworkAtTransformMultiple = 3;
+			saveNetworkAtEpochMultiple = 20;
+			saveNetworkAtTransformMultiple = 9;
 		};
 		
 		stimuli: {
-		        nrOfObjects = 1; /* Number of objects, is not used directly, but rather dumped into output files for matlab convenience */
+		        nrOfObjects = 3; /* Number of objects, is not used directly, but rather dumped into output files for matlab convenience */
 		        nrOfTransformations = 9; /* #transforms pr. object, is not used directly, but rather dumped into output files for matlab convenience  */
-		        nrOfEpochs = $nrOfEpochs; /* An epoch is one run through the file list, and the number of epochs can be no less then 1 */
+		        nrOfEpochs = 1; /* An epoch is one run through the file list, and the number of epochs can be no less then 1 */
 		};
 		
 		v1: {

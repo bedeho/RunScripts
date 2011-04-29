@@ -87,8 +87,12 @@ sub doPlot {
 	# Go to the script directory to run matlab plotting script
 	chdir($SCRIPT_FOLDER);
 	
-	# Do plot of top region
+	# Do plot of top region 
 	# plotRegionInvariance(filename, region, object, depth)
-	system($MATLAB . " -r plotRegionHistory('$firingRateFile', 5)");
-	print $MATLAB . " -r plotRegionHistory('$firingRateFile', 5)";     
+	system($MATLAB . " -r plotRegionHistory('$firingRateFile')");
+	print $MATLAB . " -r plotRegionHistory('$firingRateFile')"; 
+	
+	# Do plot of second to top region
+	#system($MATLAB . " -r plotRegionHistory('$firingRateFile',4)");
+	#print $MATLAB . " -r plotRegionHistory('$firingRateFile',4)";     
 }
