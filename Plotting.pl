@@ -6,15 +6,17 @@
 	# VARS
 	########################################################################################
 	
+	$MATLAB = "matlab -nojvm -nodisplay -nosplash ";
+	
 	# office
 	$PROJECTS_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/";  # must have trailing slash
-	$PERL_RUN_SCRIPT = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/RunScripts/Run.pl";
+	$MATLAB_SCRIPT_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/Scripts/VisBackMatlabScripts/";  # must have trailing slash
 	$SLASH = "/";
 	
 	# laptop
-	# $PROJECTS_FOLDER = "D:/Oxford/Work/Projects/";  # must have trailing slash
-	# $PERL_RUN_SCRIPT = "C:/MinGW/msys/1.0/home/Mender/Run.pl";
-	# $SLASH = "/";
+	#$PROJECTS_FOLDER = "D:/Oxford/Work/Projects/";  # must have trailing slash
+	#$MATLAB_SCRIPT_FOLDER = "D:/Oxford/Work/Projects/VisBack/VisBackScripts/";  # must have trailing slash
+	#$SLASH = "/";
 	
 	########################################################################################
 
@@ -51,57 +53,34 @@
 
 	$experimentFolder = $PROJECTS_FOLDER.$project.$SLASH."Simulations".$SLASH.$experiment.$SLASH;
 	$simulationFolder = $experimentFolder.$simulation.$SLASH;
-	$parameterFile = $simulationFolder."Parameters.txt";
-        
-	$experimentFolder = $PROJECTS_FOLDER.$project.$SLASH."Simulations".$SLASH.$experiment.$SLASH;
-	$simulationFolder = $experimentFolder.$simulation.$SLASH;
 	
-	# Iterate all simulations in this experiment
-	opendir(DIR, $experimentFolder) or die $!;
+	# Iterate all network result folders in this simulation folder
+	opendir(DIR, $simulationFolder) or die $!;
 	
 	while (my $file = readdir(DIR)) {
-	
-		# We only want files
-		next unless (-f "$dir/$file");
 		
-		# Use a regular expression to find files ending in *Network.txt
-		next unless ($file =~ m/Training$/);
+		# A file test to check that it is a directory
+		# Use -f to test for a file
+        next unless (-d "$dir/$file");
 		
-		# Run simulation
-		doTest($PROGRAM, $parameterFile, $file, $experimentFolder, $simulationFolder);
+		# Do plotting simulation
+		doPlot($simulationFolder.$file);
 	}
 	
 	closedir(DIR);
-
-# 
 	
 # Run test on network, make result folder
-sub doTest {
+sub doPlot {
 
-	my ($PROGRAM, $parameterFile, $net, $experimentFolder, $simulationFolder) = @_;
+	# Get result folder
+	my ($folder) = @_;
+	$firingRateFile = $folder . "/firingRate.dat";
 	
-	$networkFile = $simulationFolder.$net;
-	                    
-	system($PROGRAM." test ".$parameterFile." ".$networkFile." ".$experimentFolder." ".$simulationFolder);
+	# Go to the script directory to run matlab plotting script
+	chdir($SCRIPT_FOLDER);
 	
-	# Cleanup
-	$newFolder = substr $net, 0, length($net) - 4;
-	$destinationFolder = $simulationFolder.$newFolder;
-	
-   	if(!(-d $destinationFolder)) {
-            print "Making result directory...\n";
-            mkdir($destinationFolder, 0777) || print $!;
-    }
-    
-    # Move result files into result folder
-    system("mv ".$simulationFolder."*.dat ".$destinationFolder);
-    
-    # Move network into result folder
-	system("mv $networkFile ".$destinationFolder);
-	    
 	# Do plot of top region
-	# chdir($SCRIPT_FOLDER);
-	# $firingRateFile = $simulationFolder."firingRate.dat";
-	# system($MATLAB . " -r plotRegionHistory('".$firingRateFile."', 5)");
-	# print $MATLAB . " -r plotRegionHistory('".$firingRateFile."', 5)";     
+	# plotRegionInvariance(filename, region, object, depth)
+	system($MATLAB . " -r plotRegionHistory('$firingRateFile', 5)");
+	print $MATLAB . " -r plotRegionHistory('$firingRateFile', 5)";     
 }

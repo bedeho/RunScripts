@@ -12,9 +12,9 @@
 	$SLASH = "/";
 	
 	# laptop
-	# $PROJECTS_FOLDER = "D:/Oxford/Work/Projects/";  # must have trailing slash
-	# $PERL_RUN_SCRIPT = "C:/MinGW/msys/1.0/home/Mender/Run.pl";
-	# $SLASH = "/";
+	#$PROJECTS_FOLDER = "D:/Oxford/Work/Projects/";  # must have trailing slash
+	#$PERL_RUN_SCRIPT = "C:/MinGW/msys/1.0/home/Mender/Run.pl";
+	#$SLASH = "/";
 	
 	########################################################################################
 

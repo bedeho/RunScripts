@@ -7,18 +7,14 @@
 	# office
 	$PROGRAM = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/VisBack/build/Release/VisBack";
 	$PROJECTS_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/"; # must have trailing slash
-	$SCRIPT_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/Scripts/VisBackMatlabScripts/";  # must have trailing slash
 	$SLASH = "/";
 	
 	# laptop
 	#$PROGRAM = "VisBack.exe";
-	#chdir("d:/Oxford/Work/VisBack/Release");
+	#chdir("d:/Oxford/Work/VisBack/Release"); # The reason we have do to this is because the drive spesifier( d:) does not work with bash system() command
 	#$PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";  # must have trailing slash
-	#$SCRIPT_FOLDER = "D:/Oxford/Work/Projects/VisBack/VisBackScripts/";  # must have trailing slash
 	#$SLASH = "/";
-	 
-	$MATLAB = "matlab -nojvm -nodisplay -nosplash ";
-	
+
 	########################################################################################
 
 	if($#ARGV < 0) {
