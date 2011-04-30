@@ -9,6 +9,7 @@
 	#
 
 	use File::Copy;
+	use Data::Dumper;
 
 	########################################################################################
 	# VARS
@@ -29,34 +30,34 @@
 	########################################################################################
 
 	if($#ARGV < 0) {
+		
+		print "To few arguments passed.\n";
+		print "Usage:\n";
+		print "Arg. 1: project name, default is VisBack\n";
+		print "Arg. 2: experiment name, default is 1Object\n";
+		exit;
+	}
 
-	        print "To few arguments passed.\n";
-	        print "Usage:\n";
-	        print "Arg. 1: project name, default is VisBack\n";
-	        print "Arg. 2: experiment name, default is 1Object\n";
-	        exit;
+	if($#ARGV >= 0) {
+        $project = $ARGV[0];
+	} else {
+        #$project = "VisBack";
+        die "No project name provided\n";
 	}
 
 	if($#ARGV >= 1) {
-	        $project = $ARGV[1];
-	} else {
-	        #$project = "VisBack";
-	        die "No project name provided\n";
+        $experiment = $ARGV[1];
+	}
+	else {
+        #$experiment = "Working";
+		die "No experiment name provided\n";
 	}
 
 	if($#ARGV >= 2) {
-	        $experiment = $ARGV[2];
-	}
-	else {
-	        #$experiment = "Working";
-			die "No experiment name provided\n";
-	}
-
-	if($#ARGV >= 3) {
-	        $simulation = $ARGV[3];
+        $simulation = $ARGV[2];
 	} else {
-	        #$simulation = "20Epoch";
-	        die "No simulation name provided\n";
+        #$simulation = "20Epoch";
+        die "No simulation name provided\n";
 	}
 
 	$experimentFolder = $PROJECTS_FOLDER.$project.$SLASH."Simulations".$SLASH.$experiment.$SLASH;
@@ -65,34 +66,34 @@
 	# Iterate all network result folders in this simulation folder
 	opendir(DIR, $simulationFolder) or die $!;
 	
-	while (my $file = readdir(DIR)) {
+	while (my $dir = readdir(DIR)) {
 		
 		# A file test to check that it is a directory
 		# Use -f to test for a file
-        next unless (-d "$dir/$file");
+        next unless (-d $simulationFolder.$dir);
 		
-		# Do plotting simulation
-		doPlot($simulationFolder.$file);
+		# Do plotting simulation, but not for the training data
+		if($dir ne "Training")
+			doPlot($simulationFolder.$dir);
 	}
 	
 	closedir(DIR);
 	
-# Run test on network, make result folder
-sub doPlot {
-
-	# Get result folder
-	my ($folder) = @_;
-	$firingRateFile = $folder . "/firingRate.dat";
+	# Run test on network, make result folder
+	sub doPlot {
 	
-	# Go to the script directory to run matlab plotting script
-	chdir($SCRIPT_FOLDER);
-	
-	# Do plot of top region 
-	# plotRegionInvariance(filename, region, object, depth)
-	system($MATLAB . " -r plotRegionHistory('$firingRateFile')");
-	print $MATLAB . " -r plotRegionHistory('$firingRateFile')"; 
-	
-	# Do plot of second to top region
-	#system($MATLAB . " -r plotRegionHistory('$firingRateFile',4)");
-	#print $MATLAB . " -r plotRegionHistory('$firingRateFile',4)";     
-}
+		# Get result folder
+		my ($folder) = @_;
+		$firingRateFile = $folder."firingRate.dat";
+		
+		# Go to the script directory to run matlab plotting script
+		chdir($SCRIPT_FOLDER);
+		
+		# Do plot of top region 
+		# plotRegionInvariance(filename, region, object, depth)
+		system($MATLAB . " -r plotRegionHistory('$firingRateFile')");
+		
+		# Do plot of second to top region
+		#system($MATLAB . " -r plotRegionHistory('$firingRateFile',4)");
+		#print $MATLAB . " -r plotRegionHistory('$firingRateFile',4)";     
+	}

@@ -9,6 +9,7 @@
 	#
 
 	use File::Copy;
+	use Data::Dumper;
 
 	########################################################################################
 	# VARS
@@ -30,44 +31,47 @@
 
 	if($#ARGV < 0) {
 
-	        print "To few arguments passed.\n";
-	        print "Usage:\n";
-	        print "Arg. 1: project name, default is VisBack\n";
-	        print "Arg. 2: experiment name, default is 1Object\n";
-            print "Arg. 3: randomize names (random), default is not\n";
-	        exit;
+		print "To few arguments passed.\n";
+		print "Usage:\n";
+		print "Arg. 1: project name, default is VisBack\n";
+		print "Arg. 2: experiment name, default is 1Object\n";
+		print "Arg. 3: randomize folder names (random), default is not\n";
+		exit;
 	}
-
+	
+	my $project;
 	if($#ARGV >= 0) {
-	        $project = $ARGV[0];
+        $project = $ARGV[0];
 	} else {
-	        #$project = "VisBack";
-	        die "No project name provided\n";
+        #$project = "VisBack";
+        die "No project name provided\n";
 	}
-
+	
+	my $experiment;
 	if($#ARGV >= 1) {
-	        $experiment = $ARGV[1];
+        $experiment = $ARGV[1];
 	}
 	else {
-	        #$experiment = "Working";
-			die "No experiment name provided\n";
+        #$experiment = "Working";
+		die "No experiment name provided\n";
 	}
 
-	$experimentFolder = $PROJECTS_FOLDER.$project.$SLASH."Simulations".$SLASH.$experiment.$SLASH;
-	$simulationFolder = $experimentFolder.$simulation.$SLASH;
-	$parameterFile = $simulationFolder."Parameters.txt";
+	my $experimentFolder = $PROJECTS_FOLDER.$project.$SLASH."Simulations".$SLASH.$experiment.$SLASH;
+	my $simulationFolder = $experimentFolder.$simulation.$SLASH;
+	my $parameterFile = $simulationFolder."Parameters.txt";
 
     # Generate the random string to slap in front of file names
     my $random_string = "";
     if($#ARGV >= 2 && $ARGV[2] == "random") {
-     $random_string = &generate_random_string(4);
+     	$random_string = &generate_random_string(4);
     }
 
     my $experimentFolder = $PROJECTS_FOLDER.$project.$SLASH."Simulations".$SLASH.$experiment.$SLASH;
     my $untrainedNet = $experimentFolder."BlankNetwork.txt";
 
-    # Build template parameter file from these
     my $pathWayLength		= 4;
+    
+    # Build template parameter file from these
     my @dimension			= (32,32,32,32);
     my @depth				= (1,1,1,1);
     my @fanInRadius 		= (6,6,9,12);
@@ -83,7 +87,7 @@
     my @esRegionSettings;
    	for(my $r = 0;$r < $pathWayLength;$r++) {
 
-     	%region   	= ('dimension'          =>      $dimension[$r],
+     	my %region   	= ('dimension'          =>      $dimension[$r],
                          'depth'             =>      $depth[$r],
                          'fanInRadius'       =>      $fanInRadius[$r],
                          'fanInCount'        =>      $fanInCount[$r],
@@ -96,22 +100,24 @@
                          'inhibitoryWidth'   =>      $inhibitoryWidth[$r]
                          );
 
-           push @esRegionSettings, \%region;
+         push @esRegionSettings, \%region;
     }
 
     # Generate all combinations of these parameters
     # GENERALIZE THIS LOUSY CODE !!! LATER USING ASSOCIATIVE ARRAYS
     # AND PARTITIONING PARAMS INTO GENERAL AND LAYER PARAMS
+    # do recursive perumtation and send result key->val map to
+    # makeParameterFile in bottom of recursion
     
-    my @nrOfEpochs			= (800);
-    my @trainAtTimeStepMultiple	= (4);
-    my @learningRates 		= ("0.01", "0.05", "0.1", "0.5", "1.0", "2.0", "4.0", "10.0");
-    my @sparsenessLevel		= ("0.65", "0.75", "0.85", "0.90", "0.95", "0.98", "0.99");
-    my @timeStepsPrInputFile = (4);
-    my @useInhibition		= ("true","false");
-    my @resetTrace			= ("true","false");
+    my @nrOfEpochs				= (2);
+    my @trainAtTimeStepMultiple	= (1,2,4);
+    my @learningRates 			= ("0.01", "0.05", "0.1", "0.5", "1.0", "2.0", "4.0", "10.0");
+    my @sparsenessLevel			= ("0.65", "0.75", "0.85", "0.90", "0.95", "0.98", "0.99");
+    my @timeStepsPrInputFile 	= (4);
+    my @useInhibition			= ("true","false");
+    my @resetTrace				= ("true","false");
 
-	for my 	$e (@nrOfEpochs) {
+	for my $e (@nrOfEpochs) {
 		for my $t (@trainAtTimeStepMultiple) {
 			for my $tPrFile (@timeStepsPrInputFile) {
 				for my $ui (@useInhibition) {
@@ -133,8 +139,8 @@
 								my $simulationFolder = $experimentFolder.$simulation.$SLASH;
 								my $parameterFile = $simulationFolder."Parameters.txt";
 								
-								my $blankNetworkSRC = $simulationFolder."BlankNetwork.txt";
-								my $blankNetworkDEST = $experimentFolder."BlankNetwork.txt";
+								my $blankNetworkSRC = $experimentFolder."BlankNetwork.txt";
+								my $blankNetworkDEST = $simulationFolder."BlankNetwork.txt";
 								
 								if(!(-d $simulationFolder)) {
 									
@@ -144,12 +150,8 @@
 									
 									# Make parameter file and write to simulation folder
 									print "Writing new parameter file: ". $simulationCode ." \n";
-									my $result = makeParameterFile(@esRegionSettings, $e, $t, $tPrFile, $ui, $rt);
+									my $result = makeParameterFile(\@esRegionSettings, $e, $t, $tPrFile, $ui, $rt);
 									
-									# Copy blank network into folder so that we can do control test automatically
-									print "Copying blank network: ". $blankNetworkDEST . " \n";
-									copy($blankNetworkSRC, $blankNetworkDEST) or die "Copying blank network failed: $!";
-																
 									open (MYFILE, '>>'.$parameterFile);
 									print MYFILE $result;
 									close (MYFILE);
@@ -157,14 +159,20 @@
 									# Run training
 									system($PERL_RUN_SCRIPT, "train", $project, $experiment, $simulation);
 									
+									# Copy blank network into folder so that we can do control test automatically
+									print "Copying blank network: ". $blankNetworkSRC . " \n";
+									copy($blankNetworkSRC, $blankNetworkDEST) or die "Copying blank network failed: $!";
+									
 									# Run test
 									system($PERL_RUN_SCRIPT, "test", $project, $experiment, $simulation);
 									
 									# Run plotting
 									system($PERL_PLOT_SCRIPT, $project, $experiment, $simulation);
 									
+									exit;
+									
 								} else {
-									print "Could not make folder: " . $simulationFolder . "\n";
+									print "Could not make folder (already exists?): " . $simulationFolder . "\n";
 									exit;
 								}
 							}
@@ -176,11 +184,13 @@
 	}
 
 	sub makeParameterFile {
+		
+		my ($a, $nrOfEpochs, $trainAtTimeStepMultiple, $timeStepsPrInputFile, $useInhibition, $resetTrace) = @_;
 
-		my (@esRegionSettings, $nrOfEpochs, $trainAtTimeStepMultiple, $timeStepsPrInputFile, $useInhibition, $resetTrace) = @_;
-
-        @timeData = localtime(time);
-		$stamp = join(' ', @timeData);
+		@esRegionSettings = @{$a}; # <== 2h of debuging to find, I have to frkn learn PERL...
+		
+        my @timeData = localtime(time);
+		my $stamp = join(' ', @timeData);
 
 	    my $str = <<"TEMPLATE";
 		/*
@@ -256,29 +266,29 @@
 		
 		training: {
 		
-		        /*
-		        * What type of learning rule to apply.
-		        * 0 = trace, 1 = hebbian
-		        */
-		        rule = 0;
-		
-		        /*
-		        * Whether or not to reset trace value
-		        */
-		        resetTrace = $resetTrace;
-		
-		        /*
-		        * Restrict training in all layers to timesteps for a given transform
-		        * that are multiples of this value (= 1 => every time step).
-		        */
-		        trainAtTimeStepMultiple = $trainAtTimeStepMultiple;
+	        /*
+	        * What type of learning rule to apply.
+	        * 0 = trace, 1 = hebbian
+	        */
+	        rule = 0;
+	
+	        /*
+	        * Whether or not to reset trace value
+	        */
+	        resetTrace = $resetTrace;
+	
+	        /*
+	        * Restrict training in all layers to timesteps for a given transform
+	        * that are multiples of this value (= 1 => every time step).
+	        */
+	        trainAtTimeStepMultiple = $trainAtTimeStepMultiple;
 		};
 		
 		output: {
 			/*
 			* Parameters controlling what values to output,what layers is governed by "output" parameter in each layer.
 			*/
-			outputNeurons = true;
+			outputNeurons = false;
 			outputWeights = false;
 			outputAtTimeStepMultiple = 1;
 		
@@ -286,37 +296,37 @@
 			* Saving intermediate network states
 			* as independent network files
 			*/
-			saveNetwork = false;
-			saveNetworkAtEpochMultiple = 20;
+			saveNetwork = true;
+			saveNetworkAtEpochMultiple = 1;
 			saveNetworkAtTransformMultiple = 9;
 		};
 		
 		stimuli: {
-		        nrOfObjects = 3; /* Number of objects, is not used directly, but rather dumped into output files for matlab convenience */
-		        nrOfTransformations = 9; /* #transforms pr. object, is not used directly, but rather dumped into output files for matlab convenience  */
-		        nrOfEpochs = 1; /* An epoch is one run through the file list, and the number of epochs can be no less then 1 */
+	        nrOfObjects = 3; /* Number of objects, is not used directly, but rather dumped into output files for matlab convenience */
+	        nrOfTransformations = 9; /* #transforms pr. object, is not used directly, but rather dumped into output files for matlab convenience  */
+	        nrOfEpochs = $nrOfEpochs; /* An epoch is one run through the file list, and the number of epochs can be no less then 1 */
 		};
 		
 		v1: {
-		        dimension = 128; /* Classic value: 128 */
-		
-		        /*
-		        * The next values are for the parameter values used by the Gabor filter that produced the input to this netwok,
-		        * The parameter values are required to be able to deduce the input file names and to process the files properly,
-		        * as well as setup V1 structure.
-		        * Parameter explanation : http://matlabserver.cs.rug.nl/edgedetectionweb/web/edgedetection_params.html
-		        * Good visualization tool : http://www.cs.rug.nl/~imaging/simplecell.html
-		        *
-		        * NOTE: All filter params except .count must be in decimal form!, otherwise
-		        * the libconfig will throw a SettingTypeException exception.
-		        */
-		        filter: {
-		                phases = (0.0,180.0);                           /* on/off bar detectors*/
-		                orientations = (0.0,45.0,90.0,135.0);
-		
-		                /* lambda is a the param, count is the number of V2 projections from each wavelength (subsampling) */
-		                /* Visnet values for count: 201,50,13,8 */
-		                wavelengths = ( {lambda = 4; fanInCount = 201;} );
+	        dimension = 128; /* Classic value: 128 */
+	
+	        /*
+	        * The next values are for the parameter values used by the Gabor filter that produced the input to this netwok,
+	        * The parameter values are required to be able to deduce the input file names and to process the files properly,
+	        * as well as setup V1 structure.
+	        * Parameter explanation : http://matlabserver.cs.rug.nl/edgedetectionweb/web/edgedetection_params.html
+	        * Good visualization tool : http://www.cs.rug.nl/~imaging/simplecell.html
+	        *
+	        * NOTE: All filter params except .count must be in decimal form!, otherwise
+	        * the libconfig will throw a SettingTypeException exception.
+	        */
+	        filter: {
+                phases = (0.0,180.0);                           /* on/off bar detectors*/
+                orientations = (0.0,45.0,90.0,135.0);
+
+                /* lambda is a the param, count is the number of V2 projections from each wavelength (subsampling) */
+                /* Visnet values for count: 201,50,13,8 */
+                wavelengths = ( {lambda = 4; fanInCount = 201;} );
 			};
 		};
 		
@@ -343,25 +353,28 @@
 		*/
 		
 		extrastriate: (
-		TEMPLATE
+TEMPLATE
 
-		for $region ( @esRegionSettings ) {
+		#my $str = "";
 		
+		for my $region ( @esRegionSettings ) {
+			
+			my %tmp = %{ $region }; # <=== perl bullshit
+
 			$str .= "\n\t\t{\n";
-			$str .= "\t\tdimension         = ". $region{"dimension"} .";\n";
-			$str .= "\t\tdepth             = ". $region{"depth"} .";\n";
-			$str .= "\t\tfanInRadius       = ". $region{"fanInRadius"} .";\n";
-			$str .= "\t\tfanInCount        = ". $region{"fanInCount"} .";\n";
-			$str .= "\t\tlearningrate      = ". $region{"learningrate"} .";\n";
-			$str .= "\t\teta               = ". $region{"eta"} .";\n";
-			$str .= "\t\tsparsenessLevel   = ". $region{"sparsenessLevel"} .";\n";
-			$str .= "\t\tsigmoidSlope      = ". $region{"sigmoidSlope"} .";\n";
-			$str .= "\t\tinhibitoryRadius  = ". $region{"inhibitoryRadius"} .";\n";
-			$str .= "\t\tinhibitoryContrast= ". $region{"inhibitoryContrast"} .";\n";
-			$str .= "\t\tinhibitoryWidth   = ". $region{"inhibitoryWidth"} .";\n";
+			$str .= "\t\tdimension         = ". $tmp{"dimension"} .";\n";
+			$str .= "\t\tdepth             = ". $tmp{"depth"} .";\n";
+			$str .= "\t\tfanInRadius       = ". $tmp{"fanInRadius"} .";\n";
+			$str .= "\t\tfanInCount        = ". $tmp{"fanInCount"} .";\n";
+			$str .= "\t\tlearningrate      = ". $tmp{"learningrate"} .";\n";
+			$str .= "\t\teta               = ". $tmp{"eta"} .";\n";
+			$str .= "\t\tsparsenessLevel   = ". $tmp{"sparsenessLevel"} .";\n";
+			$str .= "\t\tsigmoidSlope      = ". $tmp{"sigmoidSlope"} .";\n";
+			$str .= "\t\tinhibitoryRadius  = ". $tmp{"inhibitoryRadius"} .";\n";
+			$str .= "\t\tinhibitoryContrast= ". $tmp{"inhibitoryContrast"} .";\n";
+			$str .= "\t\tinhibitoryWidth   = ". $tmp{"inhibitoryWidth"} .";\n";
 			$str .= "\t\t},";
 		}
-
         # Cut away last ',' and add on closing paranthesis and semi-colon
         chop($str);
         return $str." );";
