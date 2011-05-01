@@ -17,12 +17,16 @@
 	# office
 	$PROGRAM = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/VisBack/build/Release/VisBack";
 	$PROJECTS_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/"; # must have trailing slash
+	$MATLAB_SCRIPT_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/Scripts/VisBackMatlabScripts/";  # must have trailing slash
+	$MATLAB = "/Volumes/Applications/MATLAB_R2010b.app/bin/matlab -nosplash -nodisplay"; # -nodesktop 
 	$SLASH = "/";
 	
 	# laptop
 	#$PROGRAM = "VisBack.exe";
 	#chdir("d:/Oxford/Work/VisBack/Release"); # The reason we have do to this is because the drive spesifier( d:) does not work with bash system() command
 	#$PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";  # must have trailing slash
+	#$MATLAB_SCRIPT_FOLDER = "D:/Oxford/Work/Projects/VisBack/VisBackScripts/";  # must have trailing slash
+	#$MATLAB = "matlab -nojvm -nodisplay -nosplash ";
 	#$SLASH = "/";
 
 	########################################################################################
@@ -47,7 +51,6 @@
 	if($#ARGV >= 1) {
         $project = $ARGV[1];
 	} else {
-        #$project = "VisBack";
         die "No project name provided\n";
 	}
 
@@ -55,7 +58,6 @@
         $experiment = $ARGV[2];
 	}
 	else {
-        #$experiment = "Working";
 		die "No experiment name provided\n";
 	}
 
@@ -73,7 +75,6 @@
 		if($#ARGV >= 3) {
 	        $simulation = $ARGV[3];
 		} else {
-	        #$simulation = "20Epoch";
 	        die "No simulation name provided\n";
 		}
 		
@@ -87,26 +88,27 @@
 			} else {
 			
 				# Call doTest() for all files with file name *Network.txt, this will include
-				# 1. trained net
-				# 2. intermediate nets
-				# 3. untrained control nets
+				# 1. trained net (TrainedNetwork)
+				# 2. intermediate nets (TrainedNetwork_epoch_transform)
+				# 3. untrained control nets (BlankNetwork)
 				opendir(DIR, $simulationFolder) or die $!;
-				
-				print "hello: $simulationFolder\n";
 				
 				while (my $file = readdir(DIR)) {
 					
 					# We only want files
 					next unless (-f $simulationFolder.$file);
 					
-					# Use a regular expression to find files beginning with TrainedNetwork*
-					next unless ($file =~ m/^TrainedNetwork/);
+					# Use a regular expression to find files of the form *Network*
+					next unless ($file =~ m/Network/);
 					
 					# Run simulation
 					doTest($PROGRAM, $parameterFile, $file, $experimentFolder, $simulationFolder);
 				}
 				
-				closedir(DIR);	
+				closedir(DIR);
+				
+				# Call matlab to plot all 
+				system($MATLAB . " -r \"cd('$MATLAB_SCRIPT_FOLDER');plotSimulationRegionInvariance('$project','$experiment','$simulation');\""); #	
 			}
                 
         } elsif($command eq "train") {
@@ -147,7 +149,7 @@
 		                    
 		system($PROGRAM." test ".$parameterFile." ".$networkFile." ".$experimentFolder." ".$simulationFolder);
 		
-		# Cleanup
+		# Make result directory
 		$newFolder = substr $net, 0, length($net) - 4;
 		$destinationFolder = $simulationFolder.$newFolder;
 		
@@ -160,11 +162,5 @@
 	    system("mv ".$simulationFolder."*.dat ".$destinationFolder);
 	    
 	    # Move network into result folder
-		system("mv $networkFile ".$destinationFolder);
-		    
-		# Do plot of top region
-		# chdir($SCRIPT_FOLDER);
-		# $firingRateFile = $simulationFolder."firingRate.dat";
-		# system($MATLAB . " -r plotRegionHistory('".$firingRateFile."', 5)");
-		# print $MATLAB . " -r plotRegionHistory('".$firingRateFile."', 5)";     
+		system("mv $networkFile ".$destinationFolder);   
 	}

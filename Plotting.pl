@@ -8,6 +8,9 @@
 	#  Copyright 2011 OFTNAI. All rights reserved.
 	#
 
+	print "decomissioned, now use autoPlotRegion.m";
+	exit;
+
 	use File::Copy;
 	use Data::Dumper;
 
@@ -15,16 +18,16 @@
 	# VARS
 	########################################################################################
 	
-	$MATLAB = "matlab -nojvm -nodisplay -nosplash ";
-	
 	# office
 	$PROJECTS_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/";  # must have trailing slash
 	$MATLAB_SCRIPT_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/Scripts/VisBackMatlabScripts/";  # must have trailing slash
+	$MATLAB = "/Volumes/Applications/MATLAB_R2010b.app/bin/matlab  -nosplash "; #-nodisplay -nodesktop                                                                                                                                
 	$SLASH = "/";
 	
 	# laptop
 	#$PROJECTS_FOLDER = "D:/Oxford/Work/Projects/";  # must have trailing slash
 	#$MATLAB_SCRIPT_FOLDER = "D:/Oxford/Work/Projects/VisBack/VisBackScripts/";  # must have trailing slash
+	#$MATLAB = "matlab -nojvm -nodisplay -nosplash ";
 	#$SLASH = "/";
 	
 	########################################################################################
@@ -41,7 +44,6 @@
 	if($#ARGV >= 0) {
         $project = $ARGV[0];
 	} else {
-        #$project = "VisBack";
         die "No project name provided\n";
 	}
 
@@ -49,14 +51,12 @@
         $experiment = $ARGV[1];
 	}
 	else {
-        #$experiment = "Working";
 		die "No experiment name provided\n";
 	}
 
 	if($#ARGV >= 2) {
         $simulation = $ARGV[2];
 	} else {
-        #$simulation = "20Epoch";
         die "No simulation name provided\n";
 	}
 
@@ -73,8 +73,9 @@
         next unless (-d $simulationFolder.$dir);
 		
 		# Do plotting simulation, but not for the training data
-		if($dir ne "Training")
+		if($dir ne "Training" && $dir ne "." && $dir ne "..") {
 			doPlot($simulationFolder.$dir);
+		}
 	}
 	
 	closedir(DIR);
@@ -84,14 +85,13 @@
 	
 		# Get result folder
 		my ($folder) = @_;
-		$firingRateFile = $folder."firingRate.dat";
-		
-		# Go to the script directory to run matlab plotting script
-		chdir($SCRIPT_FOLDER);
+		$firingRateFile = $folder."/firingRate.dat";
 		
 		# Do plot of top region 
 		# plotRegionInvariance(filename, region, object, depth)
-		system($MATLAB . " -r plotRegionHistory('$firingRateFile')");
+		system($MATLAB . " -r \"cd('$MATLAB_SCRIPT_FOLDER');plotRegionInvariance('$firingRateFile');\""); #
+		#print $MATLAB . " -r \"cd('$MATLAB_SCRIPT_FOLDER');plotRegionInvariance('$firingRateFile');\"";
+		#print "\n";
 		
 		# Do plot of second to top region
 		#system($MATLAB . " -r plotRegionHistory('$firingRateFile',4)");

@@ -23,23 +23,22 @@
 	
 	########################################################################################
 
-	die "hello";
-	
-	my $dir = '/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/Simulations/1Object';
+
+	my $dir = '/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/Simulations/1Object/_E400_T4_L0.01_S0.99';
 	
 	opendir(DIR, $dir) or die $!;
 	
 	while (my $file = readdir(DIR)) {
 	
 		# We only want files
-		next unless (-f "$dir/$file");
+		next unless (-d "$dir/$file");
 		
 		# Use a regular expression to find files ending in .txt
-		next unless ($file =~ m/Network.txt$/);
+		next unless ($file =~ m/Network/);
 		
-		$z = substr $file, 0, length($file) - 4;
+		#$z = substr $file, 0, length($file) - 4;
 		
-		print "$z\n";
+		print "$file\n";
 	}
 	
 	closedir(DIR);

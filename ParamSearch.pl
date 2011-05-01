@@ -43,7 +43,6 @@
 	if($#ARGV >= 0) {
         $project = $ARGV[0];
 	} else {
-        #$project = "VisBack";
         die "No project name provided\n";
 	}
 	
@@ -52,7 +51,6 @@
         $experiment = $ARGV[1];
 	}
 	else {
-        #$experiment = "Working";
 		die "No experiment name provided\n";
 	}
 
@@ -109,13 +107,13 @@
     # do recursive perumtation and send result key->val map to
     # makeParameterFile in bottom of recursion
     
-    my @nrOfEpochs				= (2);
-    my @trainAtTimeStepMultiple	= (1,2,4);
-    my @learningRates 			= ("0.01", "0.05", "0.1", "0.5", "1.0", "2.0", "4.0", "10.0");
-    my @sparsenessLevel			= ("0.65", "0.75", "0.85", "0.90", "0.95", "0.98", "0.99");
+    my @nrOfEpochs				= (800);
+    my @trainAtTimeStepMultiple	= (1,4); # 2
+    my @learningRates 			= ("0.01", "0.05", "0.1", "0.5", "1.0", "4.0", "10.0"); # "2.0"
+    my @sparsenessLevel			= ("0.65", "0.75", "0.85", "0.90", "0.95", "0.99"); # "0.98"
     my @timeStepsPrInputFile 	= (4);
     my @useInhibition			= ("true","false");
-    my @resetTrace				= ("true","false");
+    my @resetTrace				= ("true"); # "false"
 
 	for my $e (@nrOfEpochs) {
 		for my $t (@trainAtTimeStepMultiple) {
@@ -165,12 +163,6 @@
 									
 									# Run test
 									system($PERL_RUN_SCRIPT, "test", $project, $experiment, $simulation);
-									
-									# Run plotting
-									system($PERL_PLOT_SCRIPT, $project, $experiment, $simulation);
-									
-									exit;
-									
 								} else {
 									print "Could not make folder (already exists?): " . $simulationFolder . "\n";
 									exit;
@@ -297,8 +289,8 @@
 			* as independent network files
 			*/
 			saveNetwork = true;
-			saveNetworkAtEpochMultiple = 1;
-			saveNetworkAtTransformMultiple = 9;
+			saveNetworkAtEpochMultiple = 100;
+			saveNetworkAtTransformMultiple = 9; /* This is transform multiples within each epoch, not within each object */
 		};
 		
 		stimuli: {
