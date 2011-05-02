@@ -290,7 +290,7 @@
 			*/
 			saveNetwork = true;
 			saveNetworkAtEpochMultiple = 100;
-			saveNetworkAtTransformMultiple = 9; /* This is transform multiples within each epoch, not within each object */
+			saveNetworkAtTransformMultiple = 27; /* This is transform multiples within each epoch, not within each object */
 		};
 		
 		stimuli: {
