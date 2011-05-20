@@ -31,7 +31,6 @@
 		print "Usage:\n";
 		print "Arg. 1: project name, default is VisBack\n";
 		print "Arg. 2: experiment name, default is 1Object\n";
-		#print "Arg. 3: counter\n";
 		exit;
 	}
 	
@@ -139,8 +138,11 @@
 		# Make /Training subdirectory
 		mkdir($experimentFolder.$i."/Training") or die "Could not make training dir $experimentFolder".$i."/Training dir: $!";
 		
-		# Untar result.tgz into /Training
-		system("tar", " ", $experimentFolder.$i."/result.tgz"," ":);
+		# Untar result.tgz
+		system("tar", "-xjf", $experimentFolder.$i."/result.tgz");
+		
+		# Move results into /Training
+		system("mv ".$experimentFolder.$i."/*.dat ".$experimentFolder.$i."/Training") or die "Moving result files into training folder failed: $!";
 		
 		# Copy blank network into folder so that we can do control test automatically
 		my $blankNetworkSRC = $experimentFolder."BlankNetwork.txt";

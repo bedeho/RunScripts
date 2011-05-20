@@ -20,7 +20,7 @@
 	$PROJECTS_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/";  # must have trailing slash
 	$PERL_RUN_SCRIPT = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/RunScripts/Run.pl";
 	#$PERL_PLOT_SCRIPT = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/RunScripts/Plotting.pl";
-	$PERL_XGRIDLISTENER_SCRIPT = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/RunScripts/xGridListener.pl";
+	#$PERL_XGRIDLISTENER_SCRIPT = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/RunScripts/xGridListener.pl";
 	$SLASH = "/";
 	
 	# laptop
@@ -37,8 +37,7 @@
 		print "Usage:\n";
 		print "Arg. 1: project name, default is VisBack\n";
 		print "Arg. 2: experiment name, default is 1Object\n";
-		print "Arg. 3: randomize folder names (random), default is not\n";
-		print "Arg. 4: xgrid\n";
+		print "Arg. 3: xgrid\n";
 		exit;
 	}
 	
@@ -62,12 +61,12 @@
 	
     # Generate the random string to slap in front of file names
     my $random_string = "";
-    if($#ARGV >= 2 && $ARGV[2] == "random") {
-     	$random_string = &generate_random_string(4);
-    }
+    #if($#ARGV >= 2 && $ARGV[2] == "random") {
+    # 	$random_string = &generate_random_string(4);
+    #}
     
     my $xgrid;
-	if($#ARGV >= 3 && $ARGV[2] == "xgrid") {
+	if($#ARGV >= 2 && $ARGV[2] == "xgrid") {
         $xgrid = true;
         
         # Make xgrid file
@@ -76,7 +75,6 @@
         
         # Make simulation file
         open (SIMULATIONS_FILE, '>>'.$experimentFolder.'simulations.txt');
-
 	}
 	else {
 		$xgrid = false;
@@ -134,15 +132,13 @@
     #==========
     
     my @nrOfEpochs				= (400);
-    my @trainAtTimeStepMultiple	= (1,4); # 2,4
-    my @learningRates 			= ("0.01", "0.1", "0.5", "1.0", "2.0"); # ,"10.0","4.0"
+    my @trainAtTimeStepMultiple	= (4); # 2,4
+    my @learningRates 			= ("0.01", "0.05", "0.1", "0.5"); # ,"10.0","4.0"
     my @sparsenessLevel			= ("0.65", "0.85", "0.95", "0.98", "0.99"); #  
     my @timeStepsPrInputFile 	= (4);
     my @useInhibition			= ("true", "false"); # 
-    my @resetTrace				= ("true", "false"); # 
+    my @resetTrace				= ("true"); # 
     
-    my $counter = 0;
-
 	for my $e (@nrOfEpochs) {
 		for my $t (@trainAtTimeStepMultiple) {
 			for my $tPrFile (@timeStepsPrInputFile) {
@@ -174,9 +170,7 @@
 									print SIMULATIONS_FILE $simulationCode.".txt\n";
 									
 									# Add line to batch file
-									print XGRID_FILE . $PROGRAM.' train '.$counter.$simulationCode.".txt BlankNetwork.txt ./ ./ \n";
-									
-									$counter++;
+									print XGRID_FILE "$PROGRAM --xgrid train $simulationCode".".txt BlankNetwork.txt ./ ./ \n";
 									
 								} else {
 									
