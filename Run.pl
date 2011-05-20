@@ -15,7 +15,7 @@
 	########################################################################################
 	
 	# office
-	$PROGRAM = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/VisBack/build/Release/VisBack";
+	$PROGRAM = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/XCode/build/Release/VisBack";
 	$PROJECTS_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/"; # must have trailing slash
 	$MATLAB_SCRIPT_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/Scripts/VisBackMatlabScripts/";  # must have trailing slash
 	$MATLAB = "/Volumes/Applications/MATLAB_R2010b.app/bin/matlab -nosplash -nodisplay"; # -nodesktop 
@@ -107,8 +107,9 @@
 				
 				closedir(DIR);
 				
-				# Call matlab to plot all 
-				system($MATLAB . " -r \"cd('$MATLAB_SCRIPT_FOLDER');plotSimulationRegionInvariance('$project','$experiment','$simulation');\""); #	
+				# WE DO NOT CALL THIS ANY MORE
+				# Call matlab to plot all
+				# system($MATLAB . " -r \"cd('$MATLAB_SCRIPT_FOLDER');plotSimulationRegionInvariance('$project','$experiment','$simulation');\""); #	
 			}
                 
         } elsif($command eq "train") {

@@ -23,7 +23,18 @@
 	
 	########################################################################################
 
+	$a = 33;
+	$b = 88;
+	
+	print "$a hello$b";
+	
+	exit;
+	my @files =  glob("/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/RunScripts/*.pl");
 
+	print $files[0];
+
+	exit;
+	
 	my $dir = '/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/Simulations/1Object/_E400_T4_L0.01_S0.99';
 	
 	opendir(DIR, $dir) or die $!;

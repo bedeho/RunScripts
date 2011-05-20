@@ -16,9 +16,11 @@
 	########################################################################################
 	
 	# office
+	$PROGRAM = "VisBack";
 	$PROJECTS_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/";  # must have trailing slash
 	$PERL_RUN_SCRIPT = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/RunScripts/Run.pl";
-	$PERL_PLOT_SCRIPT = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/RunScripts/Plotting.pl";
+	#$PERL_PLOT_SCRIPT = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/RunScripts/Plotting.pl";
+	$PERL_XGRIDLISTENER_SCRIPT = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/RunScripts/xGridListener.pl";
 	$SLASH = "/";
 	
 	# laptop
@@ -36,6 +38,7 @@
 		print "Arg. 1: project name, default is VisBack\n";
 		print "Arg. 2: experiment name, default is 1Object\n";
 		print "Arg. 3: randomize folder names (random), default is not\n";
+		print "Arg. 4: xgrid\n";
 		exit;
 	}
 	
@@ -53,19 +56,31 @@
 	else {
 		die "No experiment name provided\n";
 	}
-
+	
 	my $experimentFolder = $PROJECTS_FOLDER.$project.$SLASH."Simulations".$SLASH.$experiment.$SLASH;
-	my $simulationFolder = $experimentFolder.$simulation.$SLASH;
-	my $parameterFile = $simulationFolder."Parameters.txt";
-
+    my $untrainedNet = $experimentFolder."BlankNetwork.txt";
+	
     # Generate the random string to slap in front of file names
     my $random_string = "";
     if($#ARGV >= 2 && $ARGV[2] == "random") {
      	$random_string = &generate_random_string(4);
     }
+    
+    my $xgrid;
+	if($#ARGV >= 3 && $ARGV[2] == "xgrid") {
+        $xgrid = true;
+        
+        # Make xgrid file
+        open (XGRID_FILE, '>>'.$experimentFolder.'xgrid.txt');
+        print XGRID_FILE '-in '.substr($experimentFolder, 0, -1).' ';
+        
+        # Make simulation file
+        open (SIMULATIONS_FILE, '>>'.$experimentFolder.'simulations.txt');
 
-    my $experimentFolder = $PROJECTS_FOLDER.$project.$SLASH."Simulations".$SLASH.$experiment.$SLASH;
-    my $untrainedNet = $experimentFolder."BlankNetwork.txt";
+	}
+	else {
+		$xgrid = false;
+	}
 
     my $pathWayLength		= 4;
     
@@ -107,13 +122,26 @@
     # do recursive perumtation and send result key->val map to
     # makeParameterFile in bottom of recursion
     
-    my @nrOfEpochs				= (800);
-    my @trainAtTimeStepMultiple	= (1,4); # 2
-    my @learningRates 			= ("0.01", "0.05", "0.1", "0.5", "1.0", "4.0", "10.0"); # "2.0"
-    my @sparsenessLevel			= ("0.65", "0.75", "0.85", "0.90", "0.95", "0.99"); # "0.98"
+    #CT experiment
+    #==========
+    #my @nrOfEpochs				= (100);
+    #my @trainAtTimeStepMultiple= (1,4); # 2,4
+    #my @learningRates 			= ("0.001","0.01", "0.1", "1.0"); # "2.0","10.0","4.0"
+    #my @sparsenessLevel		= ("0.85", "0.90", "0.95", "0.99"); # "0.98", "0.65", "0.75"
+    #my @timeStepsPrInputFile 	= (4);
+    #my @useInhibition			= ("true"); # "false"
+    #my @resetTrace				= ("true"); # "false"
+    #==========
+    
+    my @nrOfEpochs				= (400);
+    my @trainAtTimeStepMultiple	= (1,4); # 2,4
+    my @learningRates 			= ("0.01", "0.1", "0.5", "1.0", "2.0"); # ,"10.0","4.0"
+    my @sparsenessLevel			= ("0.65", "0.85", "0.95", "0.98", "0.99"); #  
     my @timeStepsPrInputFile 	= (4);
-    my @useInhibition			= ("true","false");
-    my @resetTrace				= ("true"); # "false"
+    my @useInhibition			= ("true", "false"); # 
+    my @resetTrace				= ("true", "false"); # 
+    
+    my $counter = 0;
 
 	for my $e (@nrOfEpochs) {
 		for my $t (@trainAtTimeStepMultiple) {
@@ -130,42 +158,65 @@
 								
 								my $simulationCode = "_E" . $e . "_T" . $t . "_Ti" . $tPrFile . "_I" . $ui . "_RT" . $rt . "_L" . $l . "_S" . $s;
 								
-								# New folder name for this iteration
-								my $simulation = $random_string . $simulationCode;
-								
-								my $experimentFolder = $PROJECTS_FOLDER.$project.$SLASH."Simulations".$SLASH.$experiment.$SLASH;
-								my $simulationFolder = $experimentFolder.$simulation.$SLASH;
-								my $parameterFile = $simulationFolder."Parameters.txt";
-								
-								my $blankNetworkSRC = $experimentFolder."BlankNetwork.txt";
-								my $blankNetworkDEST = $simulationFolder."BlankNetwork.txt";
-								
-								if(!(-d $simulationFolder)) {
+								if($xgrid) {
 									
-									# Make simulation folder
-									print "Making new simulation folder: " . $simulationFolder . "\n";
-									mkdir($simulationFolder, 0777) || print $!;
+									my $parameterFile = $experimentFolder.$simulationCode.".txt";
 									
-									# Make parameter file and write to simulation folder
+									# Make parameter file
 									print "Writing new parameter file: ". $simulationCode ." \n";
 									my $result = makeParameterFile(\@esRegionSettings, $e, $t, $tPrFile, $ui, $rt);
 									
-									open (MYFILE, '>>'.$parameterFile);
-									print MYFILE $result;
-									close (MYFILE);
+									open (PARAMETER_FILE, '>>'.$parameterFile);
+									print PARAMETER_FILE $result;
+									close (PARAMETER_FILE);
 									
-									# Run training
-									system($PERL_RUN_SCRIPT, "train", $project, $experiment, $simulation);
+									# Add reference to simulation name file
+									print SIMULATIONS_FILE $simulationCode.".txt\n";
 									
-									# Copy blank network into folder so that we can do control test automatically
-									print "Copying blank network: ". $blankNetworkSRC . " \n";
-									copy($blankNetworkSRC, $blankNetworkDEST) or die "Copying blank network failed: $!";
+									# Add line to batch file
+									print XGRID_FILE . $PROGRAM.' train '.$counter.$simulationCode.".txt BlankNetwork.txt ./ ./ \n";
 									
-									# Run test
-									system($PERL_RUN_SCRIPT, "test", $project, $experiment, $simulation);
+									$counter++;
+									
 								} else {
-									print "Could not make folder (already exists?): " . $simulationFolder . "\n";
-									exit;
+									
+									# New folder name for this iteration
+									my $simulation = $random_string . $simulationCode;
+									
+									my $simulationFolder = $experimentFolder.$simulation.$SLASH;
+									my $parameterFile = $simulationFolder."Parameters.txt";
+									
+									my $blankNetworkSRC = $experimentFolder."BlankNetwork.txt";
+									my $blankNetworkDEST = $simulationFolder."BlankNetwork.txt";
+								
+									if(!(-d $simulationFolder)) {
+										
+										# Make simulation folder
+										print "Making new simulation folder: " . $simulationFolder . "\n";
+										mkdir($simulationFolder, 0777) || print $!;
+										
+										# Make parameter file and write to simulation folder
+										print "Writing new parameter file: ". $simulationCode ." \n";
+										my $result = makeParameterFile(\@esRegionSettings, $e, $t, $tPrFile, $ui, $rt);
+										
+										open (PARAMETER_FILE, '>>'.$parameterFile);
+										print PARAMETER_FILE $result;
+										close (PARAMETER_FILE);
+										
+										# Run training
+										system($PERL_RUN_SCRIPT, "train", $project, $experiment, $simulation);
+										
+										# Copy blank network into folder so that we can do control test automatically
+										print "Copying blank network: ". $blankNetworkSRC . " \n";
+										copy($blankNetworkSRC, $blankNetworkDEST) or die "Copying blank network failed: $!";
+										
+										# Run test
+										system($PERL_RUN_SCRIPT, "test", $project, $experiment, $simulation);
+										
+									} else {
+										print "Could not make folder (already exists?): " . $simulationFolder . "\n";
+										exit;
+									}
 								}
 							}
 						}
@@ -173,6 +224,22 @@
 				}
 			}
 		}
+	}
+	
+	# If we just setup xgrid parameter search
+	if($xgrid) {
+		
+		# close xgrid batch file
+		close(XGRID_FILE);
+		
+		# close simulation name file
+		close(SIMULATIONS_FILE);
+		
+		# submit job to grid
+		# is manual for now!
+		
+		# start listener
+		# is manual for now! #system($PERL_XGRIDLISTENER_SCRIPT, $project, $experiment, $counter);
 	}
 
 	sub makeParameterFile {
@@ -262,7 +329,7 @@
 	        * What type of learning rule to apply.
 	        * 0 = trace, 1 = hebbian
 	        */
-	        rule = 0;
+	        rule = 1;
 	
 	        /*
 	        * Whether or not to reset trace value
@@ -289,7 +356,7 @@
 			* as independent network files
 			*/
 			saveNetwork = true;
-			saveNetworkAtEpochMultiple = 100;
+			saveNetworkAtEpochMultiple = 300;
 			saveNetworkAtTransformMultiple = 27; /* This is transform multiples within each epoch, not within each object */
 		};
 		
