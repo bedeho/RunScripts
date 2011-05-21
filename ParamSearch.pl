@@ -35,8 +35,8 @@
 
 		print "To few arguments passed.\n";
 		print "Usage:\n";
-		print "Arg. 1: project name, default is VisBack\n";
-		print "Arg. 2: experiment name, default is 1Object\n";
+		print "Arg. 1: project name\n";
+		print "Arg. 2: experiment name\n";
 		print "Arg. 3: xgrid\n";
 		exit;
 	}
@@ -65,19 +65,17 @@
     # 	$random_string = &generate_random_string(4);
     #}
     
-    my $xgrid;
+    my $xgrid = 0;
 	if($#ARGV >= 2 && $ARGV[2] == "xgrid") {
-        $xgrid = true;
+		
+        $xgrid = 1;
         
         # Make xgrid file
-        open (XGRID_FILE, '>>'.$experimentFolder.'xgrid.txt');
+        open (XGRID_FILE, '>'.$experimentFolder.'xgrid.txt');
         print XGRID_FILE '-in '.substr($experimentFolder, 0, -1).' ';
         
         # Make simulation file
-        open (SIMULATIONS_FILE, '>>'.$experimentFolder.'simulations.txt');
-	}
-	else {
-		$xgrid = false;
+        open (SIMULATIONS_FILE, '>'.$experimentFolder.'simulations.txt');
 	}
 
     my $pathWayLength		= 4;
@@ -131,6 +129,7 @@
     #my @resetTrace				= ("true"); # "false"
     #==========
     
+    my $learningRule			= 0; # 0 = trace, 1 = hebb
     my @nrOfEpochs				= (400);
     my @trainAtTimeStepMultiple	= (4); # 2,4
     my @learningRates 			= ("0.01", "0.05", "0.1", "0.5"); # ,"10.0","4.0"
@@ -162,7 +161,7 @@
 									print "Writing new parameter file: ". $simulationCode ." \n";
 									my $result = makeParameterFile(\@esRegionSettings, $e, $t, $tPrFile, $ui, $rt);
 									
-									open (PARAMETER_FILE, '>>'.$parameterFile);
+									open (PARAMETER_FILE, '>'.$parameterFile);
 									print PARAMETER_FILE $result;
 									close (PARAMETER_FILE);
 									
@@ -170,7 +169,7 @@
 									print SIMULATIONS_FILE $simulationCode.".txt\n";
 									
 									# Add line to batch file
-									print XGRID_FILE "$PROGRAM --xgrid train $simulationCode".".txt BlankNetwork.txt ./ ./ \n";
+									print XGRID_FILE "$PROGRAM --xgrid train $simulationCode".".txt BlankNetwork.txt \"./\" \"./\" \n";
 									
 								} else {
 									
@@ -193,7 +192,7 @@
 										print "Writing new parameter file: ". $simulationCode ." \n";
 										my $result = makeParameterFile(\@esRegionSettings, $e, $t, $tPrFile, $ui, $rt);
 										
-										open (PARAMETER_FILE, '>>'.$parameterFile);
+										open (PARAMETER_FILE, '>'.$parameterFile);
 										print PARAMETER_FILE $result;
 										close (PARAMETER_FILE);
 										
@@ -323,7 +322,7 @@
 	        * What type of learning rule to apply.
 	        * 0 = trace, 1 = hebbian
 	        */
-	        rule = 1;
+	        rule = $learningRule;
 	
 	        /*
 	        * Whether or not to reset trace value
@@ -350,7 +349,7 @@
 			* as independent network files
 			*/
 			saveNetwork = true;
-			saveNetworkAtEpochMultiple = 300;
+			saveNetworkAtEpochMultiple = 100;
 			saveNetworkAtTransformMultiple = 27; /* This is transform multiples within each epoch, not within each object */
 		};
 		
