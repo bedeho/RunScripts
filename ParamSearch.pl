@@ -130,12 +130,19 @@
     #==========
     
     my $learningRule			= 0; # 0 = trace, 1 = hebb
-    my @nrOfEpochs				= (400);
-    my @trainAtTimeStepMultiple	= (4); # 2,4
+    my $nrOfObjects				= 3;
+    my $nrOfTransformations		= 9;
+    my $saveNetworkAtEpochMultiple = 20;
+    my $saveNetworkAtTransformMultiple = 27;
+    
+    
+    
+    my @nrOfEpochs				= (100);
+    my @trainAtTimeStepMultiple	= (1,4); # 2,4
     my @learningRates 			= ("0.01", "0.05", "0.1", "0.5"); # ,"10.0","4.0"
     my @sparsenessLevel			= ("0.65", "0.85", "0.95", "0.98", "0.99"); #  
     my @timeStepsPrInputFile 	= (4);
-    my @useInhibition			= ("true", "false"); # 
+    my @useInhibition			= ("true"); # 
     my @resetTrace				= ("true"); # 
     
 	for my $e (@nrOfEpochs) {
@@ -147,8 +154,8 @@
 							for my $s (@sparsenessLevel) {
 								
 								for $region ( @esRegionSettings ) {
-									$region{'learningrate'} = $l;
-									$region{'sparsenessLevel'} = $s;
+									$region->{'learningrate'} = $l;
+									$region->{'sparsenessLevel'} = $s;
 								}
 								
 								my $simulationCode = "_E" . $e . "_T" . $t . "_Ti" . $tPrFile . "_I" . $ui . "_RT" . $rt . "_L" . $l . "_S" . $s;
@@ -169,7 +176,7 @@
 									print SIMULATIONS_FILE $simulationCode.".txt\n";
 									
 									# Add line to batch file
-									print XGRID_FILE "$PROGRAM --xgrid train $simulationCode".".txt BlankNetwork.txt \"./\" \"./\" \n";
+									print XGRID_FILE "$PROGRAM --xgrid train $simulationCode".".txt BlankNetwork.txt\n";
 									
 								} else {
 									
@@ -349,13 +356,13 @@
 			* as independent network files
 			*/
 			saveNetwork = true;
-			saveNetworkAtEpochMultiple = 100;
-			saveNetworkAtTransformMultiple = 27; /* This is transform multiples within each epoch, not within each object */
+			saveNetworkAtEpochMultiple = $saveNetworkAtEpochMultiple;
+			saveNetworkAtTransformMultiple = $saveNetworkAtTransformMultiple; /* This is transform multiples within each epoch, not within each object */
 		};
 		
 		stimuli: {
-	        nrOfObjects = 3; /* Number of objects, is not used directly, but rather dumped into output files for matlab convenience */
-	        nrOfTransformations = 9; /* #transforms pr. object, is not used directly, but rather dumped into output files for matlab convenience  */
+	        nrOfObjects = $nrOfObjects; /* Number of objects, is not used directly, but rather dumped into output files for matlab convenience */
+	        nrOfTransformations = $nrOfTransformations; /* #transforms pr. object, is not used directly, but rather dumped into output files for matlab convenience  */
 	        nrOfEpochs = $nrOfEpochs; /* An epoch is one run through the file list, and the number of epochs can be no less then 1 */
 		};
 		
