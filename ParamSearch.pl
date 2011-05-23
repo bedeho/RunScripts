@@ -132,19 +132,19 @@
     my $learningRule			= 0; # 0 = trace, 1 = hebb
     my $nrOfObjects				= 3;
     my $nrOfTransformations		= 9;
-    my $saveNetworkAtEpochMultiple = 20;
+    my $saveNetworkAtEpochMultiple = 100;
     my $saveNetworkAtTransformMultiple = 27;
     
     
     
-    my @nrOfEpochs				= (100);
-    my @trainAtTimeStepMultiple	= (1,4); # 2,4
+    my @nrOfEpochs				= (800);
+    my @trainAtTimeStepMultiple	= (4); # 2,4
     my @learningRates 			= ("0.01", "0.05", "0.1", "0.5"); # ,"10.0","4.0"
-    my @sparsenessLevel			= ("0.65", "0.85", "0.95", "0.98", "0.99"); #  
+    my @sparsenessLevel			= ("0.65", "0.85", "0.90", "0.95", "0.98"); #  "0.99"
     my @timeStepsPrInputFile 	= (4);
     my @useInhibition			= ("true"); # 
     my @resetTrace				= ("true"); # 
-    
+     
 	for my $e (@nrOfEpochs) {
 		for my $t (@trainAtTimeStepMultiple) {
 			for my $tPrFile (@timeStepsPrInputFile) {

@@ -16,10 +16,12 @@
 	########################################################################################
 	
 	# office
+	$PROJECTS_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/";  # must have trailing slash
 	$PERL_RUN_SCRIPT = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/RunScripts/Run.pl";
 	$SLASH = "/";
 	
 	# laptop must have trailing slash
+	#$PROJECTS_FOLDER = "D:/Oxford/Work/Projects/";  # must have trailing slash
 	#$PERL_RUN_SCRIPT = "C:/MinGW/msys/1.0/home/Mender/Run.pl";
 	#$SLASH = "/";
 	
@@ -130,8 +132,11 @@
 		# Get name of parameter file
 		$file = $lines[$i];
 		
+		# Check for trailing new line
+		chomp($file) if (substr($file, -1, 1) eq "\n");
+		
 		print "Processing $file..\n";
-
+		
 		# Move it into dir
 		move($experimentFolder.$file, $experimentFolder.$i."/Parameters.txt") or die "Moving parameter file $file failed: $!";
 					
@@ -139,14 +144,14 @@
 		mkdir($experimentFolder.$i."/Training") or die "Could not make training dir $experimentFolder".$i."/Training dir: $!";
 		
 		# Untar result.tgz
-		system("tar", "-xjf", $experimentFolder.$i."/result.tgz");
+		system("tar", "-xjf", $experimentFolder.$i."/result.tbz");
 		
 		# Move results into /Training
 		system("mv ".$experimentFolder.$i."/*.dat ".$experimentFolder.$i."/Training") or die "Moving result files into training folder failed: $!";
 		
 		# Copy blank network into folder so that we can do control test automatically
 		my $blankNetworkSRC = $experimentFolder."BlankNetwork.txt";
-		my $blankNetworkDEST = $experimentFolder.$i."BlankNetwork.txt";
+		my $blankNetworkDEST = $experimentFolder.$i."/BlankNetwork.txt";
 		copy($blankNetworkSRC, $blankNetworkDEST) or die "Copying blank network failed: $!";
 		
 		# Rename dir
