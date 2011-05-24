@@ -39,30 +39,41 @@
 		print " * train\n";
 		print " * test\n";
 		print " * loadtest\n";
-		print "Arg. 2: project name, default is VisBack\n";
-		print "Arg. 3: experiment name, default is Working\n";
-		print "Arg. 4: simulation name, default is 20Epoch\n";
+		print "Arg. 2: project name\n";
+		print "Arg. 3: experiment name\n";
+		print "Arg. 4: simulation name\n";
+		print "Arg. 5: stimuli name\n";
 		exit;
 	}
 	else {
         $command = $ARGV[0];
 	}
-
+	
+	my $project;
 	if($#ARGV >= 1) {
         $project = $ARGV[1];
 	} else {
         die "No project name provided\n";
 	}
-
+	
+	my $experiment;
 	if($#ARGV >= 2) {
         $experiment = $ARGV[2];
 	}
 	else {
 		die "No experiment name provided\n";
 	}
+		
+	my $stimuli;
+	if($#ARGV >= 3) {
+        $stimuli = $ARGV[3];
+	} else {
+        die "No stimuli name provided\n";
+	}
 
-	$experimentFolder = $PROJECTS_FOLDER.$project.$SLASH."Simulations".$SLASH.$experiment.$SLASH;
-
+	my $experimentFolder = $PROJECTS_FOLDER.$project.$SLASH."Simulations".$SLASH.$experiment.$SLASH;
+	my $stimuliFolder = $PROJECTS_FOLDER.$project.$SLASH."Stimuli".$SLASH.$stimuli.$SLASH;
+	
 	# copy stuff into testing training folders
 	if($command eq "build") {
 		
@@ -115,7 +126,7 @@
         } elsif($command eq "train") {
         	
 			$networkFile = $experimentFolder."BlankNetwork.txt";
-			system($PROGRAM." ".$command." ".$parameterFile." ".$networkFile." ".$experimentFolder." ".$simulationFolder);
+			system($PROGRAM, $command, $parameterFile, $networkFile, $experimentFolder, $simulationFolder);
 			
 			# Cleanup
 			$destinationFolder = $simulationFolder."Training";
@@ -137,7 +148,7 @@
 				$networkFile = $experimentFolder."BlankNetwork.txt";
 			}
 			
-			system($PROGRAM." ".$command." ".$parameterFile." ".$networkFile." ".$simulationFolder);
+			system($PROGRAM, $command, $parameterFile, $networkFile, $simulationFolder);
         }
 	}
 	
@@ -148,7 +159,7 @@
 		
 		$networkFile = $simulationFolder.$net;
 		                    
-		system($PROGRAM." test ".$parameterFile." ".$networkFile." ".$experimentFolder." ".$simulationFolder);
+		system($PROGRAM, " test ", $parameterFile, $networkFile, $experimentFolder, $simulationFolder);
 		
 		# Make result directory
 		$newFolder = substr $net, 0, length($net) - 4;

@@ -37,7 +37,8 @@
 		print "Usage:\n";
 		print "Arg. 1: project name\n";
 		print "Arg. 2: experiment name\n";
-		print "Arg. 3: xgrid\n";
+		print "Arg. 3: stimuli name\n";
+		print "Arg. 4: xgrid\n";
 		exit;
 	}
 	
@@ -56,7 +57,15 @@
 		die "No experiment name provided\n";
 	}
 	
+	my $stimuli;
+	if($#ARGV >= 2) {
+        $stimuli = $ARGV[2];
+	} else {
+        die "No stimuli name provided\n";
+	}
+	
 	my $experimentFolder = $PROJECTS_FOLDER.$project.$SLASH."Simulations".$SLASH.$experiment.$SLASH;
+	my $stimuliFolder = $PROJECTS_FOLDER.$project.$SLASH."Stimuli".$SLASH.$stimuli.$SLASH;
     my $untrainedNet = $experimentFolder."BlankNetwork.txt";
 	
     # Generate the random string to slap in front of file names
@@ -72,7 +81,7 @@
         
         # Make xgrid file
         open (XGRID_FILE, '>'.$experimentFolder.'xgrid.txt');
-        print XGRID_FILE '-in '.substr($experimentFolder, 0, -1).' ';
+        print XGRID_FILE '-in '.substr($experimentFolder, 0, -1).' -files '.$stimuliFolder.'xgridPayload.tbz ';
         
         # Make simulation file
         open (SIMULATIONS_FILE, '>'.$experimentFolder.'simulations.txt');
@@ -130,20 +139,20 @@
     #==========
     
     my $learningRule			= 0; # 0 = trace, 1 = hebb
-    my $nrOfObjects				= 3;
-    my $nrOfTransformations		= 9;
-    my $saveNetworkAtEpochMultiple = 100;
-    my $saveNetworkAtTransformMultiple = 27;
+    my $nrOfObjects				= 1;
+    my $nrOfTransformations		= 1;
+    my $saveNetworkAtEpochMultiple = 400;
+    my $saveNetworkAtTransformMultiple = $nrOfObjects * $nrOfTransformations;
     
-    
-    
-    my @nrOfEpochs				= (800);
+    my @nrOfEpochs				= (10);
     my @trainAtTimeStepMultiple	= (4); # 2,4
     my @learningRates 			= ("0.01", "0.05", "0.1", "0.5"); # ,"10.0","4.0"
     my @sparsenessLevel			= ("0.65", "0.85", "0.90", "0.95", "0.98"); #  "0.99"
     my @timeStepsPrInputFile 	= (4);
     my @useInhibition			= ("true"); # 
-    my @resetTrace				= ("true"); # 
+    my @resetTrace				= ("true"); #
+    
+    $firstTime = 1; 
      
 	for my $e (@nrOfEpochs) {
 		for my $t (@trainAtTimeStepMultiple) {
@@ -176,8 +185,10 @@
 									print SIMULATIONS_FILE $simulationCode.".txt\n";
 									
 									# Add line to batch file
-									print XGRID_FILE "$PROGRAM --xgrid train $simulationCode".".txt BlankNetwork.txt\n";
+									print XGRID_FILE "\n" if !$firstTime;
+									print XGRID_FILE "$PROGRAM --xgrid train $simulationCode".".txt BlankNetwork.txt";
 									
+									$firstTime = 0;
 								} else {
 									
 									# New folder name for this iteration
@@ -204,14 +215,14 @@
 										close (PARAMETER_FILE);
 										
 										# Run training
-										system($PERL_RUN_SCRIPT, "train", $project, $experiment, $simulation);
+										system($PERL_RUN_SCRIPT, "train", $project, $experiment, $simulation, $stimuli);
 										
 										# Copy blank network into folder so that we can do control test automatically
 										print "Copying blank network: ". $blankNetworkSRC . " \n";
 										copy($blankNetworkSRC, $blankNetworkDEST) or die "Copying blank network failed: $!";
 										
 										# Run test
-										system($PERL_RUN_SCRIPT, "test", $project, $experiment, $simulation);
+										system($PERL_RUN_SCRIPT, "test", $project, $experiment, $simulation, $stimuli);
 										
 									} else {
 										print "Could not make folder (already exists?): " . $simulationFolder . "\n";

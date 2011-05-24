@@ -50,17 +50,49 @@
 	else {
 		die "No experiment name provided\n";
 	}
-	
-	#my $counter;
-    #if($#ARGV >= 2) {
-    # 	$counter = $ARGV[2];
-    #} else {
-	#	die "No counter provided\n";
-	#}
-    
+
     my $experimentFolder = $PROJECTS_FOLDER.$project.$SLASH."Simulations".$SLASH.$experiment.$SLASH;
     
-    # Check to see that all results are back
+	open (F, $experimentFolder.'simulations.txt') || die "Could not open $experimentFolder simulations.txt: $!\n";
+	@lines = <F>;
+	close F;
+	
+	for(my $i = 0;$i < $#lines+1;$i++) {
+		
+		# Get name of parameter file
+		$file = $lines[$i];
+		
+		# Check for trailing new line
+		chomp($file) if (substr($file, -1, 1) eq "\n");
+		
+		print "Processing $file..\n";
+		
+		# Move it into dir
+		move($experimentFolder.$file, $experimentFolder.$i."/Parameters.txt") or die "Moving parameter file $file failed: $!";
+					
+		# Make /Training subdirectory
+		mkdir($experimentFolder.$i."/Training") or die "Could not make training dir $experimentFolder".$i."/Training dir: $!";
+		
+		# Untar result.tgz
+		system("tar", "-xjf", $experimentFolder.$i."/result.tbz") or die "Could not untar $experimentFolder".$i."/result.tbz": $!;
+		
+		# Move results into /Training
+		system("mv ".$experimentFolder.$i."/*.dat ".$experimentFolder.$i."/Training") or die "Moving result files into training folder failed: $!";
+		
+		# Copy blank network into folder so that we can do control test automatically
+		my $blankNetworkSRC = $experimentFolder."BlankNetwork.txt";
+		my $blankNetworkDEST = $experimentFolder.$i."/BlankNetwork.txt";
+		copy($blankNetworkSRC, $blankNetworkDEST) or die "Copying blank network failed: $!";
+		
+		# Rename dir
+		$simulation = substr($file, 0, -4);
+		move($experimentFolder.$i, $experimentFolder.$simulation) or die "Renaming folder $experimentFolder"."$simulation failed: $!";
+		
+		# Run test
+		system($PERL_RUN_SCRIPT, "test", $project, $experiment, $simulation);
+	}
+	
+	# Check to see that all results are back
     #my $sleepTime = 30;
     #my $foundSleepTime = 60*5;
     #my $nrOfSleeps = 0;
@@ -90,15 +122,15 @@
 	#	
 	#	closedir(DIR);
 	#};
-	
+	#
 	#print "Found all results, sleeping for $foundSleepTime seconds to make sure all results are completely downloaded... \n";
 	#sleep($foundSleepTime);
-    
+    #
     # Process each result folder
   	#opendir(DIR, $experimentFolder) or die $!;
-	
+	#
 	#while (my $dir = readdir(DIR)) {
-		
+	#	
 	#	# Check that it is a directory
     #    next unless (-d $experimentFolder.$dir);
 	#		
@@ -120,45 +152,6 @@
 	#		
 	#	}
 	#}
-	
+	#
 	#closedir(DIR);
-	
-	open (F, $experimentFolder.'simulations.txt') || die "Could not open $experimentFolder simulations.txt: $!\n";
-	@lines = <F>;
-	close F;
-	
-	for(my $i = 0;$i < $#lines+1;$i++) {
-		
-		# Get name of parameter file
-		$file = $lines[$i];
-		
-		# Check for trailing new line
-		chomp($file) if (substr($file, -1, 1) eq "\n");
-		
-		print "Processing $file..\n";
-		
-		# Move it into dir
-		move($experimentFolder.$file, $experimentFolder.$i."/Parameters.txt") or die "Moving parameter file $file failed: $!";
-					
-		# Make /Training subdirectory
-		mkdir($experimentFolder.$i."/Training") or die "Could not make training dir $experimentFolder".$i."/Training dir: $!";
-		
-		# Untar result.tgz
-		system("tar", "-xjf", $experimentFolder.$i."/result.tbz");
-		
-		# Move results into /Training
-		system("mv ".$experimentFolder.$i."/*.dat ".$experimentFolder.$i."/Training") or die "Moving result files into training folder failed: $!";
-		
-		# Copy blank network into folder so that we can do control test automatically
-		my $blankNetworkSRC = $experimentFolder."BlankNetwork.txt";
-		my $blankNetworkDEST = $experimentFolder.$i."/BlankNetwork.txt";
-		copy($blankNetworkSRC, $blankNetworkDEST) or die "Copying blank network failed: $!";
-		
-		# Rename dir
-		$simulation = substr($file, 0, -4);
-		move($experimentFolder.$i, $experimentFolder.$simulation) or die "Renaming folder $experimentFolder"."$simulation failed: $!";
-		
-		# Run test
-		system($PERL_RUN_SCRIPT, "test", $project, $experiment, $simulation);
-	}
     
