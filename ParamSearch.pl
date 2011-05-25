@@ -126,31 +126,32 @@
     # AND PARTITIONING PARAMS INTO GENERAL AND LAYER PARAMS
     # do recursive perumtation and send result key->val map to
     # makeParameterFile in bottom of recursion
-    
-    #CT experiment
-    #==========
-    #my @nrOfEpochs				= (100);
-    #my @trainAtTimeStepMultiple= (1,4); # 2,4
-    #my @learningRates 			= ("0.001","0.01", "0.1", "1.0"); # "2.0","10.0","4.0"
-    #my @sparsenessLevel		= ("0.85", "0.90", "0.95", "0.99"); # "0.98", "0.65", "0.75"
-    #my @timeStepsPrInputFile 	= (4);
-    #my @useInhibition			= ("true"); # "false"
-    #my @resetTrace				= ("true"); # "false"
-    #==========
-    
+
     my $learningRule			= 0; # 0 = trace, 1 = hebb
-    my $nrOfObjects				= 1;
-    my $nrOfTransformations		= 1;
+    my $nrOfObjects				= 7;
+    my $nrOfTransformations		= 9;
     my $saveNetworkAtEpochMultiple = 400;
     my $saveNetworkAtTransformMultiple = $nrOfObjects * $nrOfTransformations;
     
-    my @nrOfEpochs				= (10);
+    #TRACE experiment
+    #==========
+    my @nrOfEpochs				= (800);
     my @trainAtTimeStepMultiple	= (4); # 2,4
-    my @learningRates 			= ("0.01", "0.05", "0.1", "0.5"); # ,"10.0","4.0"
-    my @sparsenessLevel			= ("0.65", "0.85", "0.90", "0.95", "0.98"); #  "0.99"
+    my @learningRates 			= ("0.001","0.01", "0.1", "1.0"); # "2.0","10.0","4.0"
+    my @sparsenessLevel			= ("0.85", "0.90", "0.95", "0.99"); # "0.98", "0.65", "0.75"
     my @timeStepsPrInputFile 	= (4);
-    my @useInhibition			= ("true"); # 
-    my @resetTrace				= ("true"); #
+    my @useInhibition			= ("true"); # "false"
+    my @resetTrace				= ("true"); # "false"
+
+    #CT experiment
+    #==========    
+    #my @nrOfEpochs				= (10);
+    #my @trainAtTimeStepMultiple	= (4); # 2,4
+    #my @learningRates 			= ("0.0001", "0.001"); # ,"10.0","4.0"
+    #my @sparsenessLevel			= ("0.90", "0.95", "0.98"); #  "0.99"
+    #my @timeStepsPrInputFile 	= (4);
+    #my @useInhibition			= ("true"); # 
+    #my @resetTrace				= ("true"); #
     
     $firstTime = 1; 
      
@@ -186,7 +187,7 @@
 									
 									# Add line to batch file
 									print XGRID_FILE "\n" if !$firstTime;
-									print XGRID_FILE "$PROGRAM --xgrid train $simulationCode".".txt BlankNetwork.txt";
+									print XGRID_FILE "$PROGRAM --xgrid train ${simulationCode}.txt BlankNetwork.txt";
 									
 									$firstTime = 0;
 								} else {

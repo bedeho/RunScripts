@@ -23,6 +23,10 @@
 	
 	########################################################################################
 	
+	system("mv","/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/Simulations/1Object/_E10_T4_Ti4_Itrue_RTtrue_L0.01_S0.65/*.dat","/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/Simulations/1Object/_E10_T4_Ti4_Itrue_RTtrue_L0.01_S0.65/BlankNetwork");
+	
+	exit
+	
 	open (TMP, '>test.txt');
 	
 	for(my $i = 0;$i < 360;$i++) {

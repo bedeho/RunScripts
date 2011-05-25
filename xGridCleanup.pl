@@ -52,10 +52,14 @@
 	}
 
     my $experimentFolder = $PROJECTS_FOLDER.$project.$SLASH."Simulations".$SLASH.$experiment.$SLASH;
+    my $xgridResult = $PROJECTS_FOLDER.$project.$SLASH."Xgrid".$SLASH.$experiment.$SLASH;
     
 	open (F, $experimentFolder.'simulations.txt') || die "Could not open $experimentFolder simulations.txt: $!\n";
 	@lines = <F>;
 	close F;
+	
+	# Move from result folder to xgrid working directory
+	move($xgridResult."*", $experimentFolder) or die "Moving xgrid results $xgridResult content into $experimentFolder failed: $!";
 	
 	for(my $i = 0;$i < $#lines+1;$i++) {
 		
@@ -74,7 +78,7 @@
 		mkdir($experimentFolder.$i."/Training") or die "Could not make training dir $experimentFolder".$i."/Training dir: $!";
 		
 		# Untar result.tgz
-		system("tar", "-xjf", $experimentFolder.$i."/result.tbz") or die "Could not untar $experimentFolder".$i."/result.tbz": $!;
+		system("tar", "-xjf", $experimentFolder.$i."/result.tbz") or die "Could not untar $experimentFolder".$i."/result.tbz: $!";
 		
 		# Move results into /Training
 		system("mv ".$experimentFolder.$i."/*.dat ".$experimentFolder.$i."/Training") or die "Moving result files into training folder failed: $!";
