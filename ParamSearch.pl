@@ -75,7 +75,7 @@
     #}
     
     my $xgrid = 0;
-	if($#ARGV >= 2 && $ARGV[2] == "xgrid") {
+	if($#ARGV >= 3 && $ARGV[3] == "xgrid") {
 		
         $xgrid = 1;
         
