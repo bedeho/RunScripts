@@ -20,7 +20,6 @@
 	$PROJECTS_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/"; # must have trailing slash
 	$MATLAB_SCRIPT_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/Scripts/VisBackMatlabScripts/";  # must have trailing slash
 	$MATLAB = "/Volumes/Applications/MATLAB_R2010b.app/bin/matlab -nosplash -nodisplay"; # -nodesktop 
-	$SLASH = "/";
 	
 	# laptop
 	#$PROGRAM = "VisBack.exe";
@@ -28,7 +27,6 @@
 	#$PROJECTS_FOLDER = "d:/Oxford/Work/Projects/";  # must have trailing slash
 	#$MATLAB_SCRIPT_FOLDER = "D:/Oxford/Work/Projects/VisBack/VisBackScripts/";  # must have trailing slash
 	#$MATLAB = "matlab -nojvm -nodisplay -nosplash ";
-	#$SLASH = "/";
 
 	########################################################################################
 
@@ -65,7 +63,7 @@
 		die "No experiment name provided\n";
 	}
 	
-	my $experimentFolder = $PROJECTS_FOLDER.$project.$SLASH."Simulations".$SLASH.$experiment.$SLASH;
+	my $experimentFolder = $PROJECTS_FOLDER.$project."/Simulations/".$experiment."/";
 	
 	# copy stuff into testing training folders
 	if($command eq "build") {
@@ -102,8 +100,8 @@
 		        die "No stimuli name provided\n";
 			}
 			
-			my $stimuliFolder = $PROJECTS_FOLDER.$project.$SLASH."Stimuli".$SLASH.$stimuli.$SLASH;
-			my $simulationFolder = $experimentFolder.$simulation.$SLASH;
+			my $stimuliFolder = $PROJECTS_FOLDER.$project."/Stimuli/".$stimuli."/";
+			my $simulationFolder = $experimentFolder.$simulation."/";
 			my $parameterFile = $simulationFolder."Parameters.txt";
 	
 	        if($command eq "test") {

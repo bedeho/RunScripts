@@ -18,12 +18,14 @@
 	# office
 	$PROJECTS_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/";  # must have trailing slash
 	$PERL_RUN_SCRIPT = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/RunScripts/Run.pl";
-	$SLASH = "/";
+	$MATLAB_SCRIPT_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/Scripts/VisBackMatlabScripts/";  # must have trailing slash
+	$MATLAB = "/Volumes/Applications/MATLAB_R2010b.app/bin/matlab -nosplash -nodisplay"; # -nodesktop
 	
 	# laptop must have trailing slash
 	#$PROJECTS_FOLDER = "D:/Oxford/Work/Projects/";  # must have trailing slash
 	#$PERL_RUN_SCRIPT = "C:/MinGW/msys/1.0/home/Mender/Run.pl";
-	#$SLASH = "/";
+	#$MATLAB_SCRIPT_FOLDER = "D:/Oxford/Work/Projects/VisBack/VisBackScripts/";  # must have trailing slash
+	#$MATLAB = "matlab -nojvm -nodisplay -nosplash ";
 	
 	########################################################################################
 
@@ -50,16 +52,23 @@
 	else {
 		die "No experiment name provided\n";
 	}
+	
+	my $stimuli;
+	if($#ARGV >= 2) {
+        $stimuli = $ARGV[2];
+	} else {
+        die "No stimuli name provided\n";
+	}
 
-    my $experimentFolder = $PROJECTS_FOLDER.$project.$SLASH."Simulations".$SLASH.$experiment.$SLASH;
-    my $xgridResult = $PROJECTS_FOLDER.$project.$SLASH."Xgrid".$SLASH.$experiment.$SLASH;
+    my $experimentFolder = $PROJECTS_FOLDER.$project."/Simulations/".$experiment."/";
+    my $xgridResult = $PROJECTS_FOLDER.$project."/Xgrid/".$experiment."/";
     
-	open (F, $experimentFolder.'simulations.txt') || die "Could not open $experimentFolder simulations.txt: $!\n";
+	open (F, "${experimentFolder}simulations.txt") || die "Could not open ${experimentFolder}simulations.txt: $!\n";
 	@lines = <F>;
 	close F;
 	
 	# Move from result folder to xgrid working directory
-	move($xgridResult."*", $experimentFolder) or die "Moving xgrid results $xgridResult content into $experimentFolder failed: $!";
+	system("mv ${xgridResult}* $experimentFolder") == 0 or die "Moving xgrid results $xgridResult content into $experimentFolder failed: $!";
 	
 	for(my $i = 0;$i < $#lines+1;$i++) {
 		
@@ -72,16 +81,16 @@
 		print "Processing $file..\n";
 		
 		# Move it into dir
-		move($experimentFolder.$file, $experimentFolder.$i."/Parameters.txt") or die "Moving parameter file $file failed: $!";
+		move($experimentFolder.$file, "${experimentFolder}${i}/Parameters.txt") or die "Moving parameter file $file failed: $!";
 					
 		# Make /Training subdirectory
-		mkdir($experimentFolder.$i."/Training") or die "Could not make training dir $experimentFolder".$i."/Training dir: $!";
+		mkdir("${experimentFolder}${i}/Training") or die "Could not make training dir ${experimentFolder}${i}/Training dir: $!";
 		
 		# Untar result.tgz
-		system("tar", "-xjf", $experimentFolder.$i."/result.tbz") or die "Could not untar $experimentFolder".$i."/result.tbz: $!";
+		system("tar -xjf ${experimentFolder}${i}/result.tbz -C ${experimentFolder}${i}") == 0 or die "Could not untar ${experimentFolder}${i}/result.tbz: $!";
 		
 		# Move results into /Training
-		system("mv ".$experimentFolder.$i."/*.dat ".$experimentFolder.$i."/Training") or die "Moving result files into training folder failed: $!";
+		system("mv ${experimentFolder}${i}/*.dat ${experimentFolder}${i}/Training") == 0 or die "Moving result files into training folder failed: $!";
 		
 		# Copy blank network into folder so that we can do control test automatically
 		my $blankNetworkSRC = $experimentFolder."BlankNetwork.txt";
@@ -90,12 +99,15 @@
 		
 		# Rename dir
 		$simulation = substr($file, 0, -4);
-		move($experimentFolder.$i, $experimentFolder.$simulation) or die "Renaming folder $experimentFolder"."$simulation failed: $!";
+		move($experimentFolder.$i, $experimentFolder.$simulation) or die "Renaming folder ${experimentFolder}${simulation} failed: $!";
 		
 		# Run test
-		system($PERL_RUN_SCRIPT, "test", $project, $experiment, $simulation);
+		system($PERL_RUN_SCRIPT, "test", $project, $experiment, $simulation, $stimuli);
 	}
 	
+	# Call matlab to plot all
+	system($MATLAB . " -r \"cd('$MATLAB_SCRIPT_FOLDER');plotExperimentInvariance('$project','$experiment');\"");
+
 	# Check to see that all results are back
     #my $sleepTime = 30;
     #my $foundSleepTime = 60*5;

@@ -17,17 +17,19 @@
 	
 	# office
 	$PROGRAM = "VisBack";
+	$PROGRAM_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/Source/build/Release/";
 	$PROJECTS_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/";  # must have trailing slash
 	$PERL_RUN_SCRIPT = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/RunScripts/Run.pl";
+	$MATLAB_SCRIPT_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/Scripts/VisBackMatlabScripts/";  # must have trailing slash
+	$MATLAB = "/Volumes/Applications/MATLAB_R2010b.app/bin/matlab -nosplash -nodisplay"; # -nodesktop
 	#$PERL_PLOT_SCRIPT = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/RunScripts/Plotting.pl";
 	#$PERL_XGRIDLISTENER_SCRIPT = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/RunScripts/xGridListener.pl";
-	$SLASH = "/";
 	
 	# laptop
+	#$PROGRAM_FOLDER
 	#$PROJECTS_FOLDER = "D:/Oxford/Work/Projects/";  # must have trailing slash
 	#$PERL_RUN_SCRIPT = "C:/MinGW/msys/1.0/home/Mender/Run.pl";
 	#$PERL_PLOT_SCRIPT = "C:/MinGW/msys/1.0/home/Mender/Plotting.pl";
-	#$SLASH = "/";
 	
 	########################################################################################
 
@@ -64,9 +66,10 @@
         die "No stimuli name provided\n";
 	}
 	
-	my $experimentFolder = $PROJECTS_FOLDER.$project.$SLASH."Simulations".$SLASH.$experiment.$SLASH;
-	my $stimuliFolder = $PROJECTS_FOLDER.$project.$SLASH."Stimuli".$SLASH.$stimuli.$SLASH;
+	my $experimentFolder = $PROJECTS_FOLDER.$project."/Simulations/".$experiment."/";
+	my $stimuliFolder = $PROJECTS_FOLDER.$project."/Stimuli/".$stimuli."/";
     my $untrainedNet = $experimentFolder."BlankNetwork.txt";
+    my $xgridResult = $PROJECTS_FOLDER.$project."/Xgrid/".$experiment."/";
 	
     # Generate the random string to slap in front of file names
     my $random_string = "";
@@ -85,6 +88,9 @@
         
         # Make simulation file
         open (SIMULATIONS_FILE, '>'.$experimentFolder.'simulations.txt');
+        
+        # Make result directory
+        mkdir($xgridResult);
 	}
 
     my $pathWayLength		= 4;
@@ -126,32 +132,34 @@
     # AND PARTITIONING PARAMS INTO GENERAL AND LAYER PARAMS
     # do recursive perumtation and send result key->val map to
     # makeParameterFile in bottom of recursion
+    
+    my $wavelengths				= "{lambda = 4; fanInCount = 201;}"; #"{lambda = 4; fanInCount = 201;}, {lambda = 8; fanInCount = 50;}, {lambda = 16; fanInCount = 13;}";
 
     my $learningRule			= 0; # 0 = trace, 1 = hebb
     my $nrOfObjects				= 7;
     my $nrOfTransformations		= 9;
-    my $saveNetworkAtEpochMultiple = 400;
+    my $saveNetworkAtEpochMultiple = 100;
     my $saveNetworkAtTransformMultiple = $nrOfObjects * $nrOfTransformations;
     
     #TRACE experiment
     #==========
-    my @nrOfEpochs				= (800);
-    my @trainAtTimeStepMultiple	= (4); # 2,4
-    my @learningRates 			= ("0.001","0.01", "0.1", "1.0"); # "2.0","10.0","4.0"
-    my @sparsenessLevel			= ("0.85", "0.90", "0.95", "0.99"); # "0.98", "0.65", "0.75"
-    my @timeStepsPrInputFile 	= (4);
-    my @useInhibition			= ("true"); # "false"
-    my @resetTrace				= ("true"); # "false"
+    my @nrOfEpochs					= (300);
+    my @trainAtTimeStepMultiple		= (4); # 2,4
+    my @learningRates 				= ("0.000001","0.00001","0.0001","0.01",,"0.1"); # "2.0","10.0","4.0"
+    my @sparsenessLevel				= ("0.90", "0.95" , "0.96" , "0.97" , "0.98" , "0.99"); # "0.98", "0.65", "0.75"
+    my @timeStepsPrInputFile 		= (4);
+    my @useInhibition				= ("true"); # "false"
+    my @resetTrace					= ("true"); # "false"
 
     #CT experiment
     #==========    
-    #my @nrOfEpochs				= (10);
+    #my @nrOfEpochs					= (10);
     #my @trainAtTimeStepMultiple	= (4); # 2,4
-    #my @learningRates 			= ("0.0001", "0.001"); # ,"10.0","4.0"
+    #my @learningRates 				= "0.0000001","0.000001","0.00001","0.0001"; # ,"10.0","4.0"
     #my @sparsenessLevel			= ("0.90", "0.95", "0.98"); #  "0.99"
-    #my @timeStepsPrInputFile 	= (4);
-    #my @useInhibition			= ("true"); # 
-    #my @resetTrace				= ("true"); #
+    #my @timeStepsPrInputFile 		= (4);
+    #my @useInhibition				= ("true"); # 
+    #my @resetTrace					= ("true"); #
     
     $firstTime = 1; 
      
@@ -195,7 +203,7 @@
 									# New folder name for this iteration
 									my $simulation = $random_string . $simulationCode;
 									
-									my $simulationFolder = $experimentFolder.$simulation.$SLASH;
+									my $simulationFolder = $experimentFolder.$simulation."/";
 									my $parameterFile = $simulationFolder."Parameters.txt";
 									
 									my $blankNetworkSRC = $experimentFolder."BlankNetwork.txt";
@@ -252,6 +260,10 @@
 		
 		# start listener
 		# is manual for now! #system($PERL_XGRIDLISTENER_SCRIPT, $project, $experiment, $counter);
+	}
+	else {
+		# Call matlab to plot all
+		system($MATLAB . " -r \"cd('$MATLAB_SCRIPT_FOLDER');plotExperimentInvariance('$project','$experiment');\"");	
 	}
 
 	sub makeParameterFile {
@@ -397,7 +409,7 @@
 
                 /* lambda is a the param, count is the number of V2 projections from each wavelength (subsampling) */
                 /* Visnet values for count: 201,50,13,8 */
-                wavelengths = ( {lambda = 4; fanInCount = 201;} );
+                wavelengths = ( $wavelengths );
 			};
 		};
 		
