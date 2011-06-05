@@ -100,9 +100,9 @@
     my @depth				= (1,1,1,1);
     my @fanInRadius 		= (6,6,9,12);
     my @fanInCount 			= (100,100,100,100);
-    my @learningrate		= ("0.1","0.1","0.1","0.1");
+    my @learningrate		= ("fail","fail","fail","fail");
     my @eta					= ("0.8","0.8","0.8","0.8");
-    my @sparsenessLevel		= ("0.98","0.98","0.98","0.98");
+    my @sparsenessLevel		= ("fail","fail","fail","fail");
     my @sigmoidSlope 		= ("190.0","40.0","75.0","26.0");
     my @inhibitoryRadius	= ("1.38","2.7","4.0","6.0");
     my @inhibitoryContrast	= ("1.5","1.5","1.6","1.4");
@@ -133,34 +133,40 @@
     # do recursive perumtation and send result key->val map to
     # makeParameterFile in bottom of recursion
     
-    my $wavelengths				= "{lambda = 4; fanInCount = 201;}"; #"{lambda = 4; fanInCount = 201;}, {lambda = 8; fanInCount = 50;}, {lambda = 16; fanInCount = 13;}";
+    my $wavelengths				= "{lambda = 4; fanInCount = 250;}"; 
+    #"{lambda = 4; fanInCount = 201;}, {lambda = 8; fanInCount = 50;}, {lambda = 16; fanInCount = 13;}";
 
-    my $learningRule			= 0; # 0 = trace, 1 = hebb
-    my $nrOfObjects				= 7;
-    my $nrOfTransformations		= 9;
+    my $learningRule			= 1; # 0 = trace, 1 = hebb
+    my $nrOfObjects				= 1;
+    my $nrOfTransformations		= 360;
     my $saveNetworkAtEpochMultiple = 100;
     my $saveNetworkAtTransformMultiple = $nrOfObjects * $nrOfTransformations;
     
     #TRACE experiment
     #==========
     my @nrOfEpochs					= (300);
-    my @trainAtTimeStepMultiple		= (4); # 2,4
-    my @learningRates 				= ("0.000001","0.00001","0.0001","0.01",,"0.1"); # "2.0","10.0","4.0"
-    my @sparsenessLevel				= ("0.90", "0.95" , "0.96" , "0.97" , "0.98" , "0.99"); # "0.98", "0.65", "0.75"
+    my @trainAtTimeStepMultiple		= (4);
+    
+    # Notice, layer one needs 3x because of small filter magnitudes, and 5x because of
+    # number of afferent synapses
+    my @learningRates_1				= ("1.5"	,"0.1"		,"0.1"		,"0.1"); # 0.1
+    my @learningRates_2				= ("0.15"	,"0.01"		,"0.01"		,"0.01"); # 0.01
+    my @learningRates_3				= ("0.015"	,"0.001"	,"0.001"	,"0.001"); # 0.001
+    my @learningRates_4				= ("0.0015"	,"0.0001"	,"0.0001"	,"0.0001"); # 0.0001
+    my @learningRates_5				= ("0.00015","0.00001"	,"0.00001"	,"0.00001"); # 0.00001
+    my @learningRates 				= (\@learningRates_1, \@learningRates_2, \@learningRates_3, \@learningRates_4, \@learningRates_5);
+    
+    my @sparsenessLevel_1			= ("0.992"	,"0.98"	,"0.88"	,"0.91"); # 0.91 classic trace
+    my @sparsenessLevel_2			= ("0.95" 	,"0.95"	,"0.88"	,"0.95"); # 0.95
+    my @sparsenessLevel_3			= ("0.96"	,"0.96"	,"0.96"	,"0.96"); # 0.96
+    my @sparsenessLevel_4			= ("0.98"	,"0.98"	,"0.88"	,"0.97"); # 0.97
+    my @sparsenessLevel_5			= ("0.99"	,"0.99"	,"0.88"	,"0.98"); # 0.98
+    my @sparsenessLevel				= (\@sparsenessLevel_1, \@sparsenessLevel_2 , \@sparsenessLevel_3 , \@sparsenessLevel_4 , \@sparsenessLevel_5);
+    
     my @timeStepsPrInputFile 		= (4);
     my @useInhibition				= ("true"); # "false"
     my @resetTrace					= ("true"); # "false"
 
-    #CT experiment
-    #==========    
-    #my @nrOfEpochs					= (10);
-    #my @trainAtTimeStepMultiple	= (4); # 2,4
-    #my @learningRates 				= "0.0000001","0.000001","0.00001","0.0001"; # ,"10.0","4.0"
-    #my @sparsenessLevel			= ("0.90", "0.95", "0.98"); #  "0.99"
-    #my @timeStepsPrInputFile 		= (4);
-    #my @useInhibition				= ("true"); # 
-    #my @resetTrace					= ("true"); #
-    
     $firstTime = 1; 
      
 	for my $e (@nrOfEpochs) {
@@ -171,12 +177,24 @@
 						for my $l (@learningRates) {
 							for my $s (@sparsenessLevel) {
 								
+								my @learningRateArray = @{ $l }; # <=== perl bullshit
+								my @sparsityArray = @{ $s };
+								my $lValue = "";
+								my $sValue = "";
+								my $layerCounter = 0;
+								
 								for $region ( @esRegionSettings ) {
-									$region->{'learningrate'} = $l;
-									$region->{'sparsenessLevel'} = $s;
+									
+									$lValue = $learningRateArray[$layerCounter];
+									$sValue = $sparsityArray[$layerCounter];
+									 
+									$region->{'learningrate'} = $lValue;
+									$region->{'sparsenessLevel'} = $sValue;
+									
+									$layerCounter++;
 								}
 								
-								my $simulationCode = "_E" . $e . "_T" . $t . "_Ti" . $tPrFile . "_I" . $ui . "_RT" . $rt . "_L" . $l . "_S" . $s;
+								my $simulationCode = "_E" . $e . "_T" . $t . "_Ti" . $tPrFile . "_I" . $ui . "_RT" . $rt . "_L" . $lValue . "_S" . $sValue;
 								
 								if($xgrid) {
 									
