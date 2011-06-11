@@ -133,136 +133,148 @@
     # do recursive perumtation and send result key->val map to
     # makeParameterFile in bottom of recursion
     
-    my $wavelengths				= "{lambda = 4; fanInCount = 250;}"; 
-    #"{lambda = 4; fanInCount = 201;}, {lambda = 8; fanInCount = 50;}, {lambda = 16; fanInCount = 13;}";
-
-    my $learningRule			= 1; # 0 = trace, 1 = hebb
-    my $nrOfObjects				= 1;
-    my $nrOfTransformations		= 360;
-    my $saveNetworkAtEpochMultiple = 100;
-    my $saveNetworkAtTransformMultiple = $nrOfObjects * $nrOfTransformations;
+	# FIXED PARAMS - non permutable
+    my $wavelengths						= "{lambda = 2; fanInCount = 250;}"; # YOU MUST CHANGE LAMBDA SO THAT SIMULATOR CAN FIND PROPER INPUT FILE NAME
+	my $neuronType						= 1; # 0 = discrete, 1 = continuous
+    my $learningRule					= 0; # 0 = trace, 1 = hebb
+    my $nrOfObjects						= 1;
+    my $nrOfTransformations				= 9;
+    my $timePrTransform					= "0.1";
+    my $nrOfEpochs						= 50;
+    my $saveNetworkAtEpochMultiple 		= 100;
+    my $saveNetworkAtTransformMultiple 	= $nrOfObjects * $nrOfTransformations;
+	my $outputAtTimeStepMultiple		= 1;
+    my $trainAtTimeStepMultiple			= 4; # only used in discrete model
+    my $timeStepsPrInputFile	 		= 4; # only used in discrete model
+    my $useInhibition					= "true"; # "false"
+    my $resetTrace						= "true"; # "false"
     
-    #TRACE experiment
-    #==========
-    my @nrOfEpochs					= (300);
-    my @trainAtTimeStepMultiple		= (4);
-    
+    # RANGE PARAMS - permutable
     # Notice, layer one needs 3x because of small filter magnitudes, and 5x because of
-    # number of afferent synapses
-    my @learningRates_1				= ("1.5"	,"0.1"		,"0.1"		,"0.1"); # 0.1
-    my @learningRates_2				= ("0.15"	,"0.01"		,"0.01"		,"0.01"); # 0.01
-    my @learningRates_3				= ("0.015"	,"0.001"	,"0.001"	,"0.001"); # 0.001
-    my @learningRates_4				= ("0.0015"	,"0.0001"	,"0.0001"	,"0.0001"); # 0.0001
-    my @learningRates_5				= ("0.00015","0.00001"	,"0.00001"	,"0.00001"); # 0.00001
-    my @learningRates 				= (\@learningRates_1, \@learningRates_2, \@learningRates_3, \@learningRates_4, \@learningRates_5);
-    
-    my @sparsenessLevel_1			= ("0.992"	,"0.98"	,"0.88"	,"0.91"); # 0.91 classic trace
-    my @sparsenessLevel_2			= ("0.95" 	,"0.95"	,"0.88"	,"0.95"); # 0.95
-    my @sparsenessLevel_3			= ("0.96"	,"0.96"	,"0.96"	,"0.96"); # 0.96
-    my @sparsenessLevel_4			= ("0.98"	,"0.98"	,"0.88"	,"0.97"); # 0.97
-    my @sparsenessLevel_5			= ("0.99"	,"0.99"	,"0.88"	,"0.98"); # 0.98
-    my @sparsenessLevel				= (\@sparsenessLevel_1, \@sparsenessLevel_2 , \@sparsenessLevel_3 , \@sparsenessLevel_4 , \@sparsenessLevel_5);
-    
-    my @timeStepsPrInputFile 		= (4);
-    my @useInhibition				= ("true"); # "false"
-    my @resetTrace					= ("true"); # "false"
+    # number of afferent synapses, total 15x.
+    my @learningRates 				= ( ["1.5"		,"0.1"		,"0.1"		,"0.1"], # 0.1 
+    									#["0.15"		,"0.01"		,"0.01"		,"0.01"], # 0.01 
+    									["0.015"	,"0.001"	,"0.001"	,"0.001"], # 0.001 
+    									#["0.0015"	,"0.0001"	,"0.0001"	,"0.0001"], # 0.0001 
+    									["0.00015"	,"0.00001"	,"0.00001"	,"0.00001"], # 0.00001 
+    									["0.000015"	,"0.000001"	,"0.000001"	,"0.000001"]); # 0.000001
+    									
+    my @sparsenessLevel				= ( ["0.75"		,"0.80"		,"0.88"		,"0.91"], # 0.91 classic trace ("0.992"	,"0.98"	,"0.88"	,"0.91") 
+    									["0.80" 	,"0.85"		,"0.88"		,"0.95"], # 0.95
+    									["0.85"		,"0.85"		,"0.88"		,"0.96"], # 0.96
+    									["0.90"		,"0.90"		,"0.88"		,"0.98"], # 0.98
+    									["0.95"		,"0.90"		,"0.99"		,"0.99"]); # 0.99
+ 
+    my @timeConstant				= ("0.001", "0.005", "0.010"); # 1ms, 5ms, 10ms
+    my @stepSizeFraction			= ("0.1"); # ("0.1", "0.05", "0.02"); # 0.1 = 1/10, 0.05 = 1/20, 0.02 = 1/50
+    my @traceTimeConstant			= ("0.01", "0.05", "0.10");
 
-    $firstTime = 1; 
-     
-	for my $e (@nrOfEpochs) {
-		for my $t (@trainAtTimeStepMultiple) {
-			for my $tPrFile (@timeStepsPrInputFile) {
-				for my $ui (@useInhibition) {
-					for my $rt (@resetTrace) {
-						for my $l (@learningRates) {
-							for my $s (@sparsenessLevel) {
-								
-								my @learningRateArray = @{ $l }; # <=== perl bullshit
-								my @sparsityArray = @{ $s };
-								my $lValue = "";
-								my $sValue = "";
-								my $layerCounter = 0;
-								
-								for $region ( @esRegionSettings ) {
-									
-									$lValue = $learningRateArray[$layerCounter];
-									$sValue = $sparsityArray[$layerCounter];
-									 
-									$region->{'learningrate'} = $lValue;
-									$region->{'sparsenessLevel'} = $sValue;
-									
-									$layerCounter++;
-								}
-								
-								my $simulationCode = "_E" . $e . "_T" . $t . "_Ti" . $tPrFile . "_I" . $ui . "_RT" . $rt . "_L" . $lValue . "_S" . $sValue;
-								
-								if($xgrid) {
-									
-									my $parameterFile = $experimentFolder.$simulationCode.".txt";
-									
-									# Make parameter file
-									print "Writing new parameter file: ". $simulationCode ." \n";
-									my $result = makeParameterFile(\@esRegionSettings, $e, $t, $tPrFile, $ui, $rt);
-									
-									open (PARAMETER_FILE, '>'.$parameterFile);
-									print PARAMETER_FILE $result;
-									close (PARAMETER_FILE);
-									
-									# Add reference to simulation name file
-									print SIMULATIONS_FILE $simulationCode.".txt\n";
-									
-									# Add line to batch file
-									print XGRID_FILE "\n" if !$firstTime;
-									print XGRID_FILE "$PROGRAM --xgrid train ${simulationCode}.txt BlankNetwork.txt";
-									
-									$firstTime = 0;
-								} else {
-									
-									# New folder name for this iteration
-									my $simulation = $random_string . $simulationCode;
-									
-									my $simulationFolder = $experimentFolder.$simulation."/";
-									my $parameterFile = $simulationFolder."Parameters.txt";
-									
-									my $blankNetworkSRC = $experimentFolder."BlankNetwork.txt";
-									my $blankNetworkDEST = $simulationFolder."BlankNetwork.txt";
-								
-									if(!(-d $simulationFolder)) {
+    $firstTime = 1;
+    
+	#for my $t (@trainAtTimeStepMultiple) {
+		#for my $tPrFile (@timeStepsPrInputFile) {
+			#for my $ui (@useInhibition) {
+				#for my $rt (@resetTrace) {
+					for my $tC (@timeConstant) {
+						for my $sSF (@stepSizeFraction) {
+							for my $ttC (@$traceTimeConstant) {
+								for my $l (@learningRates) {
+									for my $s (@sparsenessLevel) {
 										
-										# Make simulation folder
-										print "Making new simulation folder: " . $simulationFolder . "\n";
-										mkdir($simulationFolder, 0777) || print $!;
+										my @learningRateArray = @{ $l };
+										my @sparsityArray = @{ $s };
+										my $layerCounter = 0;
 										
-										# Make parameter file and write to simulation folder
-										print "Writing new parameter file: ". $simulationCode ." \n";
-										my $result = makeParameterFile(\@esRegionSettings, $e, $t, $tPrFile, $ui, $rt);
+										for $region ( @esRegionSettings ) {
+											
+											$region->{'learningrate'} = $learningRateArray[$layerCounter];
+											$region->{'sparsenessLevel'} = $sparsityArray[$layerCounter];
+											
+											$layerCounter++;
+										}
 										
-										open (PARAMETER_FILE, '>'.$parameterFile);
-										print PARAMETER_FILE $result;
-										close (PARAMETER_FILE);
+										$Lstr = "@learningRateArray";
+										$Lstr =~ s/\s/-/g;
 										
-										# Run training
-										system($PERL_RUN_SCRIPT, "train", $project, $experiment, $simulation, $stimuli);
+										$Sstr = "@sparsityArray";
+										$Sstr =~ s/\s/-/g;s
 										
-										# Copy blank network into folder so that we can do control test automatically
-										print "Copying blank network: ". $blankNetworkSRC . " \n";
-										copy($blankNetworkSRC, $blankNetworkDEST) or die "Copying blank network failed: $!";
+										my $simulationCode = "L${Lstr}_S${Sstr}_tC${tC}_sSF${sSF}_ttC${ttC}";
+										#"_I".$ui.
+										#"_RT".$rt
+										#"_T".$t
+										#"_Ti".$tPrFiles
+										#"_E".$nrOfEpochs
 										
-										# Run test
-										system($PERL_RUN_SCRIPT, "test", $project, $experiment, $simulation, $stimuli);
+										if($xgrid) {
+											
+											my $parameterFile = $experimentFolder.$simulationCode.".txt";
+											
+											# Make parameter file
+											print "Writing new parameter file: ". $simulationCode ." \n";
+											my $result = makeParameterFile(\@esRegionSettings, $nrOfEpochs, $trainAtTimeStepMultiple, $timeStepsPrInputFile, $useInhibition, $resetTrace, $neuronType, $tC, $sSF, $ttC, $timePrTransform);
+											
+											open (PARAMETER_FILE, '>'.$parameterFile);
+											print PARAMETER_FILE $result;
+											close (PARAMETER_FILE);
+											
+											# Add reference to simulation name file
+											print SIMULATIONS_FILE $simulationCode.".txt\n";
+											
+											# Add line to batch file
+											print XGRID_FILE "\n" if !$firstTime;
+											print XGRID_FILE "$PROGRAM --xgrid train ${simulationCode}.txt BlankNetwork.txt";
+											
+											$firstTime = 0;
+										} else {
+											
+											# New folder name for this iteration
+											my $simulation = $random_string . $simulationCode;
+											
+											my $simulationFolder = $experimentFolder.$simulation."/";
+											my $parameterFile = $simulationFolder."Parameters.txt";
+											
+											my $blankNetworkSRC = $experimentFolder."BlankNetwork.txt";
+											my $blankNetworkDEST = $simulationFolder."BlankNetwork.txt";
 										
-									} else {
-										print "Could not make folder (already exists?): " . $simulationFolder . "\n";
-										exit;
+											if(!(-d $simulationFolder)) {
+												
+												# Make simulation folder
+												print "Making new simulation folder: " . $simulationFolder . "\n";
+												mkdir($simulationFolder, 0777) || print $!;
+												
+												# Make parameter file and write to simulation folder
+												print "Writing new parameter file: ". $simulationCode ." \n";
+												my $result = makeParameterFile(\@esRegionSettings, $nrOfEpochs, $trainAtTimeStepMultiple, $timeStepsPrInputFile, $useInhibition, $resetTrace, $neuronType, $tC, $sSF, $ttC, $timePrTransform);
+												
+												open (PARAMETER_FILE, '>'.$parameterFile);
+												print PARAMETER_FILE $result;
+												close (PARAMETER_FILE);
+												
+												# Run training
+												system($PERL_RUN_SCRIPT, "train", $project, $experiment, $simulation, $stimuli);
+												
+												# Copy blank network into folder so that we can do control test automatically
+												print "Copying blank network: ". $blankNetworkSRC . " \n";
+												copy($blankNetworkSRC, $blankNetworkDEST) or die "Copying blank network failed: $!";
+												
+												# Run test
+												system($PERL_RUN_SCRIPT, "test", $project, $experiment, $simulation, $stimuli);
+												
+											} else {
+												print "Could not make folder (already exists?): " . $simulationFolder . "\n";
+												exit;
+											}
+										}
 									}
 								}
 							}
 						}
 					}
-				}
-			}
-		}
-	}
+				#}
+			#}
+		#}
+	#}
 	
 	# If we just setup xgrid parameter search
 	if($xgrid) {
@@ -286,7 +298,7 @@
 
 	sub makeParameterFile {
 		
-		my ($a, $nrOfEpochs, $trainAtTimeStepMultiple, $timeStepsPrInputFile, $useInhibition, $resetTrace) = @_;
+		my ($a, $nrOfEpochs, $trainAtTimeStepMultiple, $timeStepsPrInputFile, $useInhibition, $resetTrace, $neuronType, $timeConstant, $stepSizeFraction, $traceTimeConstant, $timePrTransform, $outputAtTimeStepMultiple) = @_;
 
 		@esRegionSettings = @{$a}; # <== 2h of debuging to find, I have to frkn learn PERL...
 		
@@ -317,13 +329,38 @@
 		/*
 		* Tells run command what type
 		* of activation function to use:
-		* 0 = rate coded, 1 ?= leaky integrator
+		* 0 = rate coded, 1 = leaky integrator
 		*/
-		neuronType = 0;
+		neuronType = $neuronType;
+		
+		continuous : {
+		
+			/*
+			* Time constant of excitatory neurons
+			*/
+			timeConstant = $timeConstant;
+			
+			/*
+			* Time constant of trace term in continous case, analogous
+			* to \eta in discrete case.
+			*/
+			traceTimeConstant = $traceTimeConstant;
+			
+			/*
+			* This fraction of timeConstant is the step size of the forward euler solver
+			*/
+			stepSizeFraction = $stepSizeFraction;
+			
+			/*
+			* Time used on each transform, the number of time steps
+			* pr. transform is therefor: floor(timePrTransform/(traceTimeConstant * stepSizeFraction));
+			*/
+			timePrTransform = $timePrTransform;
+		};
 		
 		/*
 		* Only used in build command:
-		* No feedback = 0, symmetric feedback = 1, probabilistic feedback ?= 2
+		* No feedback = 0, symmetric feedback = 1, probabilistic feedback = 2
 		*/
 		feedback = 0;
 		
@@ -353,7 +390,11 @@
 		*/
 		useInhibition = $useInhibition;
 		
-		/* Number of time steps pr. input file, in practice MUST be at least the length of pathway (including v1)-1
+		/* Number of time steps pr. input file, 
+			is only used in discrete case, in continous case we use 
+			timePrTransform
+		
+		   In practice MUST be at least the length of pathway (including v1)-1
 		   BE AWARE THAT IF THERE IS NO FEEDBACK, THEN THERE IS NO POINT IN HAVING THIS PARAM
 		   LARGER THEN SIZE OF EXTRA STRIATE PATHWAY.*/
 		timeStepsPrInputFile = $timeStepsPrInputFile;
@@ -379,6 +420,7 @@
 	        resetTrace = $resetTrace;
 	
 	        /*
+	        * ONLY USED IN DISCRETE CASE:
 	        * Restrict training in all layers to timesteps for a given transform
 	        * that are multiples of this value (= 1 => every time step).
 	        */
@@ -391,7 +433,7 @@
 			*/
 			outputNeurons = false;
 			outputWeights = false;
-			outputAtTimeStepMultiple = 1;
+			outputAtTimeStepMultiple = $outputAtTimeStepMultiple;
 		
 			/*
 			* Saving intermediate network states
@@ -422,7 +464,7 @@
 	        * the libconfig will throw a SettingTypeException exception.
 	        */
 	        filter: {
-                phases = (0.0,180.0);                           /* on/off bar detectors*/
+                phases = (0.0,180.0,90.0,-90.0);                           /* on/off bar detectors*/
                 orientations = (0.0,45.0,90.0,135.0);
 
                 /* lambda is a the param, count is the number of V2 projections from each wavelength (subsampling) */

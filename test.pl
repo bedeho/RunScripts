@@ -1,6 +1,86 @@
 #!/usr/bin/perl
 
 	use File::Copy;
+	use Data::Dumper;
+	
+	@test = (1,2,3,4,5,6,6,555);
+	
+	$str = "@test";
+	
+	$str =~ s/\s/-/g;
+	
+	print $str;
+	#print Dumper(@test);
+	exit;
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
 
 	# COMMAND LINE ARGUMENTS
 	# $1: project name : e.g. VisBack
@@ -22,6 +102,8 @@
 	# $SLASH = "/";
 	
 	########################################################################################
+	
+
 	
 	system("mv","/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/Simulations/1Object/_E10_T4_Ti4_Itrue_RTtrue_L0.01_S0.65/*.dat","/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/Simulations/1Object/_E10_T4_Ti4_Itrue_RTtrue_L0.01_S0.65/BlankNetwork");
 	
