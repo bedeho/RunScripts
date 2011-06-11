@@ -71,12 +71,6 @@
     my $untrainedNet = $experimentFolder."BlankNetwork.txt";
     my $xgridResult = $PROJECTS_FOLDER.$project."/Xgrid/".$experiment."/";
 	
-    # Generate the random string to slap in front of file names
-    my $random_string = "";
-    #if($#ARGV >= 2 && $ARGV[2] == "random") {
-    # 	$random_string = &generate_random_string(4);
-    #}
-    
     my $xgrid = 0;
 	if($#ARGV >= 3 && $ARGV[3] == "xgrid") {
 		
@@ -134,20 +128,21 @@
     # makeParameterFile in bottom of recursion
     
 	# FIXED PARAMS - non permutable
-    my $wavelengths						= "{lambda = 2; fanInCount = 250;}"; # YOU MUST CHANGE LAMBDA SO THAT SIMULATOR CAN FIND PROPER INPUT FILE NAME
-	my $neuronType						= 1; # 0 = discrete, 1 = continuous
-    my $learningRule					= 0; # 0 = trace, 1 = hebb
-    my $nrOfObjects						= 1;
-    my $nrOfTransformations				= 9;
-    my $timePrTransform					= "0.1";
-    my $nrOfEpochs						= 50;
-    my $saveNetworkAtEpochMultiple 		= 100;
-    my $saveNetworkAtTransformMultiple 	= $nrOfObjects * $nrOfTransformations;
-	my $outputAtTimeStepMultiple		= 1;
-    my $trainAtTimeStepMultiple			= 4; # only used in discrete model
-    my $timeStepsPrInputFile	 		= 4; # only used in discrete model
-    my $useInhibition					= "true"; # "false"
-    my $resetTrace						= "true"; # "false"
+	# These are global!, used directly in param file
+    $wavelengths					= "{lambda = 2; fanInCount = 201;}"; # YOU MUST CHANGE LAMBDA SO THAT SIMULATOR CAN FIND PROPER INPUT FILE NAME
+	$neuronType						= 1; # 0 = discrete, 1 = continuous
+    $learningRule					= 0; # 0 = trace, 1 = hebb
+    $nrOfObjects					= 2;
+    $nrOfTransformations			= 9;
+    $timePrTransform				= "0.1";
+    $nrOfEpochs						= 50;
+    $saveNetworkAtEpochMultiple 	= 100;
+    $saveNetworkAtTransformMultiple = $nrOfObjects * $nrOfTransformations;
+	$outputAtTimeStepMultiple		= 1;
+    $trainAtTimeStepMultiple		= 4; # only used in discrete model
+    $timeStepsPrInputFile	 		= 4; # only used in discrete model
+    $useInhibition					= "true"; # "false"
+    $resetTrace						= "true"; # "false"
     
     # RANGE PARAMS - permutable
     # Notice, layer one needs 3x because of small filter magnitudes, and 5x because of
@@ -156,18 +151,20 @@
     									#["0.15"		,"0.01"		,"0.01"		,"0.01"], # 0.01 
     									["0.015"	,"0.001"	,"0.001"	,"0.001"], # 0.001 
     									#["0.0015"	,"0.0001"	,"0.0001"	,"0.0001"], # 0.0001 
-    									["0.00015"	,"0.00001"	,"0.00001"	,"0.00001"], # 0.00001 
+    									#["0.00015"	,"0.00001"	,"0.00001"	,"0.00001"], # 0.00001 
     									["0.000015"	,"0.000001"	,"0.000001"	,"0.000001"]); # 0.000001
     									
-    my @sparsenessLevel				= ( ["0.75"		,"0.80"		,"0.88"		,"0.91"], # 0.91 classic trace ("0.992"	,"0.98"	,"0.88"	,"0.91") 
-    									["0.80" 	,"0.85"		,"0.88"		,"0.95"], # 0.95
-    									["0.85"		,"0.85"		,"0.88"		,"0.96"], # 0.96
-    									["0.90"		,"0.90"		,"0.88"		,"0.98"], # 0.98
-    									["0.95"		,"0.90"		,"0.99"		,"0.99"]); # 0.99
+    my @sparsenessLevel				= ( #["0.75"		,"0.80"		,"0.88"		,"0.91"], # 0.91 classic trace ("0.992"	,"0.98"	,"0.88"	,"0.91") 
+    									#["0.80" 	,"0.85"		,"0.88"		,"0.95"], # 0.95
+    									#["0.85"		,"0.85"		,"0.88"		,"0.96"], # 0.96
+    									["0.94"		,"0.90"		,"0.88"		,"0.90"], # 0.98
+    									["0.94"		,"0.90"		,"0.88"		,"0.98"],
+    									#["0.95"		,"0.90"		,"0.99"		,"0.99"]
+    									); # 0.99
  
-    my @timeConstant				= ("0.001", "0.005", "0.010"); # 1ms, 5ms, 10ms
+    my @timeConstant				= ("0.001", "0.010"); # 1ms, 5ms "0.005", 10ms
     my @stepSizeFraction			= ("0.1"); # ("0.1", "0.05", "0.02"); # 0.1 = 1/10, 0.05 = 1/20, 0.02 = 1/50
-    my @traceTimeConstant			= ("0.01", "0.05", "0.10");
+    my @traceTimeConstant			= ("0.01", "0.10"); #"0.05"
 
     $firstTime = 1;
     
@@ -177,7 +174,7 @@
 				#for my $rt (@resetTrace) {
 					for my $tC (@timeConstant) {
 						for my $sSF (@stepSizeFraction) {
-							for my $ttC (@$traceTimeConstant) {
+							for my $ttC (@traceTimeConstant) {
 								for my $l (@learningRates) {
 									for my $s (@sparsenessLevel) {
 										
@@ -197,7 +194,7 @@
 										$Lstr =~ s/\s/-/g;
 										
 										$Sstr = "@sparsityArray";
-										$Sstr =~ s/\s/-/g;s
+										$Sstr =~ s/\s/-/g;
 										
 										my $simulationCode = "L${Lstr}_S${Sstr}_tC${tC}_sSF${sSF}_ttC${ttC}";
 										#"_I".$ui.
@@ -212,7 +209,7 @@
 											
 											# Make parameter file
 											print "Writing new parameter file: ". $simulationCode ." \n";
-											my $result = makeParameterFile(\@esRegionSettings, $nrOfEpochs, $trainAtTimeStepMultiple, $timeStepsPrInputFile, $useInhibition, $resetTrace, $neuronType, $tC, $sSF, $ttC, $timePrTransform);
+											my $result = makeParameterFile(\@esRegionSettings, $tC, $sSF, $ttC);
 											
 											open (PARAMETER_FILE, '>'.$parameterFile);
 											print PARAMETER_FILE $result;
@@ -229,7 +226,7 @@
 										} else {
 											
 											# New folder name for this iteration
-											my $simulation = $random_string . $simulationCode;
+											my $simulation = $simulationCode;
 											
 											my $simulationFolder = $experimentFolder.$simulation."/";
 											my $parameterFile = $simulationFolder."Parameters.txt";
@@ -245,7 +242,7 @@
 												
 												# Make parameter file and write to simulation folder
 												print "Writing new parameter file: ". $simulationCode ." \n";
-												my $result = makeParameterFile(\@esRegionSettings, $nrOfEpochs, $trainAtTimeStepMultiple, $timeStepsPrInputFile, $useInhibition, $resetTrace, $neuronType, $tC, $sSF, $ttC, $timePrTransform);
+												my $result = makeParameterFile(\@esRegionSettings, $tC, $sSF, $ttC);
 												
 												open (PARAMETER_FILE, '>'.$parameterFile);
 												print PARAMETER_FILE $result;
@@ -298,7 +295,7 @@
 
 	sub makeParameterFile {
 		
-		my ($a, $nrOfEpochs, $trainAtTimeStepMultiple, $timeStepsPrInputFile, $useInhibition, $resetTrace, $neuronType, $timeConstant, $stepSizeFraction, $traceTimeConstant, $timePrTransform, $outputAtTimeStepMultiple) = @_;
+		my ($a, $timeConstant, $stepSizeFraction, $traceTimeConstant) = @_;
 
 		@esRegionSettings = @{$a}; # <== 2h of debuging to find, I have to frkn learn PERL...
 		
@@ -341,15 +338,15 @@
 			timeConstant = $timeConstant;
 			
 			/*
+			* This fraction of timeConstant is the step size of the forward euler solver
+			*/
+			stepSizeFraction = $stepSizeFraction;
+			
+			/*
 			* Time constant of trace term in continous case, analogous
 			* to \eta in discrete case.
 			*/
 			traceTimeConstant = $traceTimeConstant;
-			
-			/*
-			* This fraction of timeConstant is the step size of the forward euler solver
-			*/
-			stepSizeFraction = $stepSizeFraction;
 			
 			/*
 			* Time used on each transform, the number of time steps
@@ -521,26 +518,4 @@ TEMPLATE
         # Cut away last ',' and add on closing paranthesis and semi-colon
         chop($str);
         return $str." );";
-	}
-
-	###########################################################
-	# Written by Guy Malachi http://guymal.com
-	# 18 August, 2002
-	###########################################################
-	
-	# This function generates random strings of a given length
-	sub generate_random_string
-	{
-		my $length_of_randomstring=shift;# the length of
-				 # the random string to generate
-		
-		my @chars=('a'..'z','A'..'Z','0'..'9','_');
-		my $random_string;
-		foreach (1..$length_of_randomstring)
-		{
-			# rand @chars will generate a random
-			# number between 0 and scalar @chars
-			$random_string.=$chars[rand @chars];
-		}
-		return $random_string;
 	}
