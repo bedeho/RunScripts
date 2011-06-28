@@ -132,13 +132,13 @@
     $wavelengths					= "{lambda = 2; fanInCount = 201;}"; # YOU MUST CHANGE LAMBDA SO THAT SIMULATOR CAN FIND PROPER INPUT FILE NAME
 	$neuronType						= 1; # 0 = discrete, 1 = continuous
     $learningRule					= 0; # 0 = trace, 1 = hebb
-    $nrOfObjects					= 2;
+    $nrOfObjects					= 7;
     $nrOfTransformations			= 9;
     $timePrTransform				= "0.1";
-    $nrOfEpochs						= 50;
-    $saveNetworkAtEpochMultiple 	= 100;
+    $nrOfEpochs						= 100;
+    $saveNetworkAtEpochMultiple 	= 30;
     $saveNetworkAtTransformMultiple = $nrOfObjects * $nrOfTransformations;
-	$outputAtTimeStepMultiple		= 1;
+	$outputAtTimeStepMultiple		= 100;
     $trainAtTimeStepMultiple		= 4; # only used in discrete model
     $timeStepsPrInputFile	 		= 4; # only used in discrete model
     $useInhibition					= "true"; # "false"
@@ -147,24 +147,31 @@
     # RANGE PARAMS - permutable
     # Notice, layer one needs 3x because of small filter magnitudes, and 5x because of
     # number of afferent synapses, total 15x.
-    my @learningRates 				= ( ["1.5"		,"0.1"		,"0.1"		,"0.1"], # 0.1 
-    									#["0.15"		,"0.01"		,"0.01"		,"0.01"], # 0.01 
-    									["0.015"	,"0.001"	,"0.001"	,"0.001"], # 0.001 
+    my @learningRates 				= ( #["150000.0"	,"100000.0"	,"100000.0"	,"100000.0"],
+    									["15000.0"	,"10000.0"	,"10000.0"	,"10000.0"],
+    									["1500.0"	,"1000.0"	,"1000.0"	,"1000.0"],
+    									["150.0"	,"100.0"	,"100.0"	,"100.0"]
+    									#["15.0"		,"10.0"		,"10.0"		,"10.0"],
+    									#["1.5"		,"0.1"		,"0.1"		,"0.1"], # 0.1 
+    									#["0.15"	,"0.01"		,"0.01"		,"0.01"] # 0.01 
+    									#["0.015"	,"0.001"	,"0.001"	,"0.001"], # 0.001 
     									#["0.0015"	,"0.0001"	,"0.0001"	,"0.0001"], # 0.0001 
     									#["0.00015"	,"0.00001"	,"0.00001"	,"0.00001"], # 0.00001 
-    									["0.000015"	,"0.000001"	,"0.000001"	,"0.000001"]); # 0.000001
+    									#["0.000015","0.000001"	,"0.000001"	,"0.000001"] # 0.000001
+    									); 
     									
-    my @sparsenessLevel				= ( #["0.75"		,"0.80"		,"0.88"		,"0.91"], # 0.91 classic trace ("0.992"	,"0.98"	,"0.88"	,"0.91") 
+    my @sparsenessLevel				= ( 
+    									#["0.75"	,"0.80"		,"0.88"		,"0.91"], # 0.91 
     									#["0.80" 	,"0.85"		,"0.88"		,"0.95"], # 0.95
-    									#["0.85"		,"0.85"		,"0.88"		,"0.96"], # 0.96
-    									["0.94"		,"0.90"		,"0.88"		,"0.90"], # 0.98
-    									["0.94"		,"0.90"		,"0.88"		,"0.98"],
-    									#["0.95"		,"0.90"		,"0.99"		,"0.99"]
-    									); # 0.99
+    									#["0.85"	,"0.85"		,"0.88"		,"0.96"], # 0.96
+    									#["0.94"		,"0.90"		,"0.88"		,"0.90"], # 0.90
+    									["0.992"		,"0.98"		,"0.88"		,"0.91"] # classic trace ("0.992"	,"0.98"	,"0.88"	,"0.91") 
+    									#["0.95"	,"0.90"		,"0.99"		,"0.99"]  # 0.99
+    									); 
  
-    my @timeConstant				= ("0.001", "0.010"); # 1ms, 5ms "0.005", 10ms
-    my @stepSizeFraction			= ("0.1"); # ("0.1", "0.05", "0.02"); # 0.1 = 1/10, 0.05 = 1/20, 0.02 = 1/50
-    my @traceTimeConstant			= ("0.01", "0.10"); #"0.05"
+    my @timeConstant				= ("0.001", "0.010", "0.100"); # 1ms, 5ms "0.005", 10ms
+    my @stepSizeFraction			= ("0.1", "0.05"); # 0.1 = 1/10, 0.05 = 1/20, 0.02 = 1/50
+    my @traceTimeConstant			= ("0.1", "0.05", "0.01"); #("0.1", "0.05", "0.01")
 
     $firstTime = 1;
     
@@ -387,13 +394,15 @@
 		*/
 		useInhibition = $useInhibition;
 		
-		/* Number of time steps pr. input file, 
-			is only used in discrete case, in continous case we use 
-			timePrTransform
+		/*
+		* ONLY USED IN DISCRETE CASE: 
+		* Number of time steps pr. input file,
+		* in continous case we use timePrTransform
 		
-		   In practice MUST be at least the length of pathway (including v1)-1
-		   BE AWARE THAT IF THERE IS NO FEEDBACK, THEN THERE IS NO POINT IN HAVING THIS PARAM
-		   LARGER THEN SIZE OF EXTRA STRIATE PATHWAY.*/
+		* In practice MUST be at least the length of pathway (including v1)-1
+		* BE AWARE THAT IF THERE IS NO FEEDBACK, THEN THERE IS NO POINT IN HAVING THIS PARAM
+		* LARGER THEN SIZE OF EXTRA STRIATE PATHWAY.
+		*/
 		timeStepsPrInputFile = $timeStepsPrInputFile;
 		
 		/*

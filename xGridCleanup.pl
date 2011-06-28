@@ -33,8 +33,9 @@
 
 		print "To few arguments passed.\n";
 		print "Usage:\n";
-		print "Arg. 1: project name, default is VisBack\n";
-		print "Arg. 2: experiment name, default is 1Object\n";
+		print "Arg. 1: project name\n";
+		print "Arg. 2: experiment name\n";
+		print "Arg. 3: stimuli name\n";
 		exit;
 	}
 	
