@@ -131,11 +131,11 @@
 	# These are global!, used directly in param file
     $wavelengths					= "{lambda = 2; fanInCount = 201;}"; # YOU MUST CHANGE LAMBDA SO THAT SIMULATOR CAN FIND PROPER INPUT FILE NAME
 	$neuronType						= 1; # 0 = discrete, 1 = continuous
-    $learningRule					= 0; # 0 = trace, 1 = hebb
-    $nrOfObjects					= 7;
+    $learningRule					= 1; # 0 = trace, 1 = hebb
+    $nrOfObjects					= 2;
     $nrOfTransformations			= 9;
-    $timePrTransform				= "0.1";
-    $nrOfEpochs						= 100;
+    $timePrTransform				= "0.1"; # TIME EACH TRANSFORM IS ACTIVE/USED AS INPUT
+    $nrOfEpochs						= 1;
     $saveNetworkAtEpochMultiple 	= 30;
     $saveNetworkAtTransformMultiple = $nrOfObjects * $nrOfTransformations;
 	$outputAtTimeStepMultiple		= 100;
@@ -148,11 +148,11 @@
     # Notice, layer one needs 3x because of small filter magnitudes, and 5x because of
     # number of afferent synapses, total 15x.
     my @learningRates 				= ( #["150000.0"	,"100000.0"	,"100000.0"	,"100000.0"],
-    									["15000.0"	,"10000.0"	,"10000.0"	,"10000.0"],
-    									["1500.0"	,"1000.0"	,"1000.0"	,"1000.0"],
-    									["150.0"	,"100.0"	,"100.0"	,"100.0"]
+    									#["15000.0"	,"10000.0"	,"10000.0"	,"10000.0"],
+    									#["1500.0"	,"1000.0"	,"1000.0"	,"1000.0"],
+    									["150.0"	,"100.0"	,"100.0"	,"100.0"],
     									#["15.0"		,"10.0"		,"10.0"		,"10.0"],
-    									#["1.5"		,"0.1"		,"0.1"		,"0.1"], # 0.1 
+    									["1.5"		,"0.1"		,"0.1"		,"0.1"], # 0.1 
     									#["0.15"	,"0.01"		,"0.01"		,"0.01"] # 0.01 
     									#["0.015"	,"0.001"	,"0.001"	,"0.001"], # 0.001 
     									#["0.0015"	,"0.0001"	,"0.0001"	,"0.0001"], # 0.0001 
@@ -169,9 +169,9 @@
     									#["0.95"	,"0.90"		,"0.99"		,"0.99"]  # 0.99
     									); 
  
-    my @timeConstant				= ("0.001", "0.010", "0.100"); # 1ms, 5ms "0.005", 10ms
-    my @stepSizeFraction			= ("0.1", "0.05"); # 0.1 = 1/10, 0.05 = 1/20, 0.02 = 1/50
-    my @traceTimeConstant			= ("0.1", "0.05", "0.01"); #("0.1", "0.05", "0.01")
+    my @timeConstant				= ("0.001", "0.010", "0.100"); # 1ms = "0.001", 5ms = "0.005", 10ms = "0.010", 100ms = "0.1"
+    my @stepSizeFraction			= ("0.1", "0.05", "0.02"); # 0.1 = 1/10, 0.05 = 1/20, 0.02 = 1/50
+    my @traceTimeConstant			= ("0.1"); #("0.1", "0.05", "0.01")
 
     $firstTime = 1;
     
@@ -203,7 +203,22 @@
 										$Sstr = "@sparsityArray";
 										$Sstr =~ s/\s/-/g;
 										
-										my $simulationCode = "L${Lstr}_S${Sstr}_tC${tC}_sSF${sSF}_ttC${ttC}";
+										#my $simulationCode = "L${Lstr}_S${Sstr}_tC${tC}_sSF${sSF}_ttC${ttC}";
+										# Build name so that only varying parameters are included.
+										
+										my $simulationCode = "";
+										$simulationCode .= "L${Lstr}_" if scalar(@learningRates) > 1;
+										$simulationCode .= "S${Sstr}_" if scalar(@sparsenessLevel) > 1;
+										$simulationCode .= "tC${tC}_" if scalar(@timeConstant) > 1;
+										$simulationCode .= "sSF${sSF}_" if scalar(@stepSizeFraction) > 1;
+										$simulationCode .= "ttC${ttC}_" if scalar(@traceTimeConstant) > 1;
+										
+										#"_I".$ui.
+										#"_RT".$rt
+										#"_T".$t
+										#"_Ti".$tPrFiles
+										#"_E".$nrOfEpochs
+										
 										#"_I".$ui.
 										#"_RT".$rt
 										#"_T".$t
