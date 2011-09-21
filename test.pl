@@ -2,6 +2,28 @@
 
 	use File::Copy;
 	use Data::Dumper;
+	use POSIX;
+	
+	
+	print LONG_MAX;
+	
+	exit;
+	
+	
+	print floor(34.56) if 4==4;
+	
+	exit;
+	
+	$f = 33;
+	use Term::ReadKey; 
+	ReadMode 'cbreak'; 
+	$key = ReadKey(0); 
+	ReadMode 'normal';
+	
+	
+	
+	
+	exit;
 	
 	@test = (1,2,3,4,5,6,6,555);
 	

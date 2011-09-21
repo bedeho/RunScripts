@@ -163,7 +163,19 @@
 		
 		$networkFile = $simulationFolder.$net;
 		
-		system($PROGRAM, "test", $parameterFile, $networkFile, "${experimentFolder}FileList.txt", "${stimuliFolder}Filtered/", $simulationFolder);
+		# DEBUG-DEBUG-DEBUG	
+		#print $PROGRAM."\n"."test"."\n".$parameterFile."\n".$networkFile."\n"."${experimentFolder}FileList.txt"."\n"."${stimuliFolder}Filtered/"."\n".$simulationFolder."\n\n\n";
+		
+		#print "Press any key to run test...\n";
+		
+		#use Term::ReadKey; 
+		#ReadMode 'cbreak'; 
+		#$key = ReadKey(0); 
+		#ReadMode 'normal';
+	
+		# DEBUG-DEBUG-DEBUG
+		
+		system($PROGRAM, "test", $parameterFile, $networkFile, "${experimentFolder}FileList.txt", "${stimuliFolder}Filtered/", $simulationFolder) == 0 or die "Could not execute simulator, or simulator returned 0";
 		
 		# Make result directory
 		$newFolder = substr $net, 0, length($net) - 4;

@@ -7,6 +7,10 @@
 	#  Created by Bedeho Mender on 29/04/11.
 	#  Copyright 2011 OFTNAI. All rights reserved.
 	#
+	
+	use strict;
+    use warnings;
+    use POSIX;
 
 	use File::Copy;
 	use Data::Dumper;
@@ -16,20 +20,20 @@
 	########################################################################################
 	
 	# office
-	$PROGRAM = "VisBack";
-	$PROGRAM_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/Source/build/Release/";
-	$PROJECTS_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/";  # must have trailing slash
-	$PERL_RUN_SCRIPT = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/RunScripts/Run.pl";
-	$MATLAB_SCRIPT_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/Scripts/VisBackMatlabScripts/";  # must have trailing slash
-	$MATLAB = "/Volumes/Applications/MATLAB_R2010b.app/bin/matlab -nosplash -nodisplay"; # -nodesktop
-	#$PERL_PLOT_SCRIPT = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/RunScripts/Plotting.pl";
-	#$PERL_XGRIDLISTENER_SCRIPT = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/RunScripts/xGridListener.pl";
+	my $PROGRAM = "VisBack";
+	my $PROGRAM_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/Source/build/Release/";
+	my $PROJECTS_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/";  # must have trailing slash
+	my $PERL_RUN_SCRIPT = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/RunScripts/Run.pl";
+	my $MATLAB_SCRIPT_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/Scripts/VisBackMatlabScripts/";  # must have trailing slash
+	my $MATLAB = "/Volumes/Applications/MATLAB_R2010b.app/bin/matlab -nosplash -nodisplay"; # -nodesktop
+	#my $PERL_PLOT_SCRIPT = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/RunScripts/Plotting.pl";
+	#my $PERL_XGRIDLISTENER_SCRIPT = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/RunScripts/xGridListener.pl";
 	
 	# laptop
-	#$PROGRAM_FOLDER
-	#$PROJECTS_FOLDER = "D:/Oxford/Work/Projects/";  # must have trailing slash
-	#$PERL_RUN_SCRIPT = "C:/MinGW/msys/1.0/home/Mender/Run.pl";
-	#$PERL_PLOT_SCRIPT = "C:/MinGW/msys/1.0/home/Mender/Plotting.pl";
+	#my $PROGRAM_FOLDER
+	#my $PROJECTS_FOLDER = "D:/Oxford/Work/Projects/";  # must have trailing slash
+	#my $PERL_RUN_SCRIPT = "C:/MinGW/msys/1.0/home/Mender/Run.pl";
+	#my $PERL_PLOT_SCRIPT = "C:/MinGW/msys/1.0/home/Mender/Plotting.pl";
 	
 	########################################################################################
 
@@ -72,7 +76,7 @@
     my $xgridResult = $PROJECTS_FOLDER.$project."/Xgrid/".$experiment."/";
 	
     my $xgrid = 0;
-	if($#ARGV >= 3 && $ARGV[3] == "xgrid") {
+	if($#ARGV >= 3 && $ARGV[3] eq "xgrid") {
 		
         $xgrid = 1;
         
@@ -95,7 +99,8 @@
     my @fanInRadius 		= (6,6,9,12);
     my @fanInCount 			= (100,100,100,100);
     my @learningrate		= ("fail","fail","fail","fail");
-    my @eta					= ("0.8","0.8","0.8","0.8");
+    my @eta					= ("fail","fail","fail","fail");
+    #my @timeConstant		= ("fail","fail","fail","fail");
     my @sparsenessLevel		= ("fail","fail","fail","fail");
     my @sigmoidSlope 		= ("190.0","40.0","75.0","26.0");
     my @inhibitoryRadius	= ("1.38","2.7","4.0","6.0");
@@ -105,12 +110,13 @@
     my @esRegionSettings;
    	for(my $r = 0;$r < $pathWayLength;$r++) {
 
-     	my %region   	= ('dimension'          =>      $dimension[$r],
+     	my %region   	= ('dimension'       =>      $dimension[$r],
                          'depth'             =>      $depth[$r],
                          'fanInRadius'       =>      $fanInRadius[$r],
                          'fanInCount'        =>      $fanInCount[$r],
                          'learningrate'      =>      $learningrate[$r],
                          'eta'               =>      $eta[$r],
+                         #'timeConstant'     =>      $timeConstant[$r],
                          'sparsenessLevel'   =>      $sparsenessLevel[$r],
                          'sigmoidSlope'      =>      $sigmoidSlope[$r],
                          'inhibitoryRadius'  =>      $inhibitoryRadius[$r],
@@ -129,160 +135,180 @@
     
 	# FIXED PARAMS - non permutable
 	# These are global!, used directly in param file
-    $wavelengths					= "{lambda = 2; fanInCount = 201;}"; # YOU MUST CHANGE LAMBDA SO THAT SIMULATOR CAN FIND PROPER INPUT FILE NAME
-	$neuronType						= 1; # 0 = discrete, 1 = continuous
-    $learningRule					= 1; # 0 = trace, 1 = hebb
-    $nrOfObjects					= 2;
-    $nrOfTransformations			= 9;
-    $timePrTransform				= "0.1"; # TIME EACH TRANSFORM IS ACTIVE/USED AS INPUT
-    $nrOfEpochs						= 1;
-    $saveNetworkAtEpochMultiple 	= 30;
-    $saveNetworkAtTransformMultiple = $nrOfObjects * $nrOfTransformations;
-	$outputAtTimeStepMultiple		= 100;
-    $trainAtTimeStepMultiple		= 4; # only used in discrete model
-    $timeStepsPrInputFile	 		= 4; # only used in discrete model
-    $useInhibition					= "true"; # "false"
-    $resetTrace						= "true"; # "false"
+    my $wavelengths						= "{lambda = 2; fanInCount = 201;}"; # YOU MUST CHANGE LAMBDA SO THAT SIMULATOR CAN FIND PROPER INPUT FILE NAME
+	my $neuronType						= 1; # 0 = discrete, 1 = continuous
+    my $learningRule					= 1; # 0 = trace, 1 = hebb
+    my $nrOfObjects						= 2;
+    my $nrOfTransformations				= 9;
+    my $nrOfEpochs						= 100;
+    my $saveNetworkAtEpochMultiple 		= 50;
+    my $saveNetworkAtTransformMultiple 	= $nrOfObjects * $nrOfTransformations;
+	my $outputAtTimeStepMultiple		= 100;
+    my $trainAtTimeStepMultiple			= 4; # only used in discrete model
+    my $timeStepsPrInputFile	 		= 4; # only used in discrete model
+    my $useInhibition					= "true"; # "false"
+    my $resetTrace						= "true"; # "false"
     
     # RANGE PARAMS - permutable
     # Notice, layer one needs 3x because of small filter magnitudes, and 5x because of
     # number of afferent synapses, total 15x.
-    my @learningRates 				= ( #["150000.0"	,"100000.0"	,"100000.0"	,"100000.0"],
+    my @learningRates 				= ( #["150000.0","100000.0"	,"100000.0"	,"100000.0"],
     									#["15000.0"	,"10000.0"	,"10000.0"	,"10000.0"],
     									#["1500.0"	,"1000.0"	,"1000.0"	,"1000.0"],
     									["150.0"	,"100.0"	,"100.0"	,"100.0"],
-    									#["15.0"		,"10.0"		,"10.0"		,"10.0"],
-    									["1.5"		,"0.1"		,"0.1"		,"0.1"], # 0.1 
+    									["15.0"	,"10.0"		,"10.0"		,"10.0"]
+    									#["1.5"		,"0.1"		,"0.1"		,"0.1"], # 0.1 
     									#["0.15"	,"0.01"		,"0.01"		,"0.01"] # 0.01 
     									#["0.015"	,"0.001"	,"0.001"	,"0.001"], # 0.001 
     									#["0.0015"	,"0.0001"	,"0.0001"	,"0.0001"], # 0.0001 
-    									#["0.00015"	,"0.00001"	,"0.00001"	,"0.00001"], # 0.00001 
+    									#["0.00015"	,"0.00001"	,"0.00001"	,"0.00001"] # 0.00001 
     									#["0.000015","0.000001"	,"0.000001"	,"0.000001"] # 0.000001
-    									); 
-    									
-    my @sparsenessLevel				= ( 
-    									#["0.75"	,"0.80"		,"0.88"		,"0.91"], # 0.91 
+    									);
+
+    my @sparsenessLevels			= ( #["0.75"	,"0.80"		,"0.88"		,"0.91"], # 0.91 
     									#["0.80" 	,"0.85"		,"0.88"		,"0.95"], # 0.95
     									#["0.85"	,"0.85"		,"0.88"		,"0.96"], # 0.96
-    									#["0.94"		,"0.90"		,"0.88"		,"0.90"], # 0.90
-    									["0.992"		,"0.98"		,"0.88"		,"0.91"] # classic trace ("0.992"	,"0.98"	,"0.88"	,"0.91") 
+    									#["0.94"	,"0.90"		,"0.88"		,"0.90"], # 0.90
+    									["0.992"	,"0.98"		,"0.88"		,"0.91"]  # classic trace ("0.992"	,"0.98"	,"0.88"	,"0.91") 
     									#["0.95"	,"0.90"		,"0.99"		,"0.99"]  # 0.99
-    									); 
- 
-    my @timeConstant				= ("0.001", "0.010", "0.100"); # 1ms = "0.001", 5ms = "0.005", 10ms = "0.010", 100ms = "0.1"
-    my @stepSizeFraction			= ("0.1", "0.05", "0.02"); # 0.1 = 1/10, 0.05 = 1/20, 0.02 = 1/50
+    									);
+    
+    # 1ms = "0.001", 5ms = "0.005", 10ms = "0.010", 100ms = "0.1"
+    my @etas						= ( ["0.100"	,"0.200"	,"0.400"	,"0.800"], # 0.100
+    									["0.100" 	,"0.400"	,"0.800"	,"1.200"], # 1.500
+    									["0.200"	,"0.600"	,"1.200"	,"2.000"]  # 3.000
+    									);
+    									
+ 	my @timePrTransform				= ("0.1","0.5","1.3","2.1","3.3","6.1","12.1"); #("0.01","0.05","0.5"); # TIME EACH TRANSFORM IS ACTIVE/USED AS INPUT
+    
+    my @stepSizeFraction			= ("0.1","0.05"); # 0.1 = 1/10, 0.05 = 1/20, 0.02 = 1/50
+    
     my @traceTimeConstant			= ("0.1"); #("0.1", "0.05", "0.01")
 
-    $firstTime = 1;
+    my $firstTime = 1;
     
 	#for my $t (@trainAtTimeStepMultiple) {
 		#for my $tPrFile (@timeStepsPrInputFile) {
 			#for my $ui (@useInhibition) {
 				#for my $rt (@resetTrace) {
-					for my $tC (@timeConstant) {
-						for my $sSF (@stepSizeFraction) {
-							for my $ttC (@traceTimeConstant) {
-								for my $l (@learningRates) {
-									for my $s (@sparsenessLevel) {
-										
-										my @learningRateArray = @{ $l };
-										my @sparsityArray = @{ $s };
-										my $layerCounter = 0;
-										
-										for $region ( @esRegionSettings ) {
+					for my $tpT (@timePrTransform) {
+						for my $eta (@etas) {
+							for my $sSF (@stepSizeFraction) {
+								for my $ttC (@traceTimeConstant) {
+									for my $l (@learningRates) {
+										for my $s (@sparsenessLevels) {
 											
-											$region->{'learningrate'} = $learningRateArray[$layerCounter];
-											$region->{'sparsenessLevel'} = $sparsityArray[$layerCounter];
+											my @learningRateArray = @{ $l };
+											my @sparsityArray = @{ $s };
+											my @etaArray = @{ $eta };
 											
-											$layerCounter++;
-										}
-										
-										$Lstr = "@learningRateArray";
-										$Lstr =~ s/\s/-/g;
-										
-										$Sstr = "@sparsityArray";
-										$Sstr =~ s/\s/-/g;
-										
-										#my $simulationCode = "L${Lstr}_S${Sstr}_tC${tC}_sSF${sSF}_ttC${ttC}";
-										# Build name so that only varying parameters are included.
-										
-										my $simulationCode = "";
-										$simulationCode .= "L${Lstr}_" if scalar(@learningRates) > 1;
-										$simulationCode .= "S${Sstr}_" if scalar(@sparsenessLevel) > 1;
-										$simulationCode .= "tC${tC}_" if scalar(@timeConstant) > 1;
-										$simulationCode .= "sSF${sSF}_" if scalar(@stepSizeFraction) > 1;
-										$simulationCode .= "ttC${ttC}_" if scalar(@traceTimeConstant) > 1;
-										
-										#"_I".$ui.
-										#"_RT".$rt
-										#"_T".$t
-										#"_Ti".$tPrFiles
-										#"_E".$nrOfEpochs
-										
-										#"_I".$ui.
-										#"_RT".$rt
-										#"_T".$t
-										#"_Ti".$tPrFiles
-										#"_E".$nrOfEpochs
-										
-										if($xgrid) {
+											my $layerCounter = 0;
 											
-											my $parameterFile = $experimentFolder.$simulationCode.".txt";
+											# Smallest eta value, it is used with ssF
+											my $minTc = LONG_MAX;
 											
-											# Make parameter file
-											print "Writing new parameter file: ". $simulationCode ." \n";
-											my $result = makeParameterFile(\@esRegionSettings, $tC, $sSF, $ttC);
-											
-											open (PARAMETER_FILE, '>'.$parameterFile);
-											print PARAMETER_FILE $result;
-											close (PARAMETER_FILE);
-											
-											# Add reference to simulation name file
-											print SIMULATIONS_FILE $simulationCode.".txt\n";
-											
-											# Add line to batch file
-											print XGRID_FILE "\n" if !$firstTime;
-											print XGRID_FILE "$PROGRAM --xgrid train ${simulationCode}.txt BlankNetwork.txt";
-											
-											$firstTime = 0;
-										} else {
-											
-											# New folder name for this iteration
-											my $simulation = $simulationCode;
-											
-											my $simulationFolder = $experimentFolder.$simulation."/";
-											my $parameterFile = $simulationFolder."Parameters.txt";
-											
-											my $blankNetworkSRC = $experimentFolder."BlankNetwork.txt";
-											my $blankNetworkDEST = $simulationFolder."BlankNetwork.txt";
-										
-											if(!(-d $simulationFolder)) {
+											for my $region ( @esRegionSettings ) {
 												
-												# Make simulation folder
-												print "Making new simulation folder: " . $simulationFolder . "\n";
-												mkdir($simulationFolder, 0777) || print $!;
+												$region->{'learningrate'} = $learningRateArray[$layerCounter];
+												$region->{'sparsenessLevel'} = $sparsityArray[$layerCounter];
+												$region->{'eta'} = $etaArray[$layerCounter];
 												
-												# Make parameter file and write to simulation folder
+												# Find the smallest eta, it is
+												$minTc = $region->{'eta'} if $minTc > $region->{'eta'};
+												
+												$layerCounter++;
+											}
+											
+											my $Lstr = "@learningRateArray";
+											$Lstr =~ s/\s/-/g;
+											
+											my $Sstr = "@sparsityArray";
+											$Sstr =~ s/\s/-/g;
+											
+											my $etastr = "@etaArray";
+											$etastr =~ s/\s/-/g;
+											
+											# Build name so that only varying parameters are included.
+											my $simulationCode = "";
+											$simulationCode .= "tpT${tpT}_" if scalar(@timePrTransform) > 1;
+											$simulationCode .= "E${etastr}_" if scalar(@etas) > 1;
+											$simulationCode .= "sSF${sSF}_" if scalar(@stepSizeFraction) > 1;
+											$simulationCode .= "ttC${ttC}_" if scalar(@traceTimeConstant) > 1;
+											$simulationCode .= "L${Lstr}_" if scalar(@learningRates) > 1;
+											$simulationCode .= "S${Sstr}_" if scalar(@sparsenessLevels) > 1;
+											
+											# Number of timesteps pr. transform
+											my $nrOfTimeSteps = floor($tpT/($minTc * $sSF));
+											
+											# Test that there are actual time steps in continous case, and
+											# that it is sufficient to get nonzero stimulation to the top region
+											next if ($neuronType == 1 && ($nrOfTimeSteps == 0 || $nrOfTimeSteps < $pathWayLength));	
+								
+											#"_I".$ui.
+											#"_RT".$rt
+											#"_T".$t
+											#"_Ti".$tPrFiles
+											#"_E".$nrOfEpochs
+											
+											if($xgrid) {
+												
+												my $parameterFile = $experimentFolder.$simulationCode.".txt";
+												
+												# Make parameter file
 												print "Writing new parameter file: ". $simulationCode ." \n";
-												my $result = makeParameterFile(\@esRegionSettings, $tC, $sSF, $ttC);
+												my $result = makeParameterFile(\@esRegionSettings, $sSF, $ttC, $tpT);
 												
 												open (PARAMETER_FILE, '>'.$parameterFile);
 												print PARAMETER_FILE $result;
 												close (PARAMETER_FILE);
 												
-												# Run training
-												system($PERL_RUN_SCRIPT, "train", $project, $experiment, $simulation, $stimuli);
+												# Add reference to simulation name file
+												print SIMULATIONS_FILE $simulationCode.".txt\n";
 												
-												# Copy blank network into folder so that we can do control test automatically
-												print "Copying blank network: ". $blankNetworkSRC . " \n";
-												copy($blankNetworkSRC, $blankNetworkDEST) or die "Copying blank network failed: $!";
+												# Add line to batch file
+												print XGRID_FILE "\n" if !$firstTime;
+												print XGRID_FILE "$PROGRAM --xgrid train ${simulationCode}.txt BlankNetwork.txt";
 												
-												# Run test
-												system($PERL_RUN_SCRIPT, "test", $project, $experiment, $simulation, $stimuli);
-												
+												$firstTime = 0;
 											} else {
-												print "Could not make folder (already exists?): " . $simulationFolder . "\n";
-												exit;
+												
+												# New folder name for this iteration
+												my $simulation = $simulationCode;
+												
+												my $simulationFolder = $experimentFolder.$simulation."/";
+												my $parameterFile = $simulationFolder."Parameters.txt";
+												
+												my $blankNetworkSRC = $experimentFolder."BlankNetwork.txt";
+												my $blankNetworkDEST = $simulationFolder."BlankNetwork.txt";
+											
+												if(!(-d $simulationFolder)) {
+													
+													# Make simulation folder
+													print "Making new simulation folder: " . $simulationFolder . "\n";
+													mkdir($simulationFolder, 0777) || print $!;
+													
+													# Make parameter file and write to simulation folder
+													print "Writing new parameter file: ". $simulationCode ." \n";
+													my $result = makeParameterFile(\@esRegionSettings, $sSF, $ttC, $tpT);
+													
+													open (PARAMETER_FILE, '>'.$parameterFile);
+													print PARAMETER_FILE $result;
+													close (PARAMETER_FILE);
+													
+													# Run training
+													system($PERL_RUN_SCRIPT, "train", $project, $experiment, $simulation, $stimuli);
+													
+													# Copy blank network into folder so that we can do control test automatically
+													print "Copying blank network: ". $blankNetworkSRC . " \n";
+													copy($blankNetworkSRC, $blankNetworkDEST) or die "Copying blank network failed: $!";
+													
+													# Run test
+													system($PERL_RUN_SCRIPT, "test", $project, $experiment, $simulation, $stimuli);
+													
+												} else {
+													print "Could not make folder (already exists?): " . $simulationFolder . "\n";
+													exit;
+												}
 											}
 										}
 									}
@@ -314,10 +340,15 @@
 		# Call matlab to plot all
 		system($MATLAB . " -r \"cd('$MATLAB_SCRIPT_FOLDER');plotExperimentInvariance('$project','$experiment');\"");	
 	}
+	
+	#		/*
+	#		* Time constant of excitatory neurons
+	#		*/
+	#		timeConstant = $timeConstant;
 
 	sub makeParameterFile {
 		
-		my ($a, $timeConstant, $stepSizeFraction, $traceTimeConstant) = @_;
+		my ($a, $stepSizeFraction, $traceTimeConstant, $timePrTransform) = @_;
 
 		@esRegionSettings = @{$a}; # <== 2h of debuging to find, I have to frkn learn PERL...
 		
@@ -354,11 +385,6 @@
 		
 		continuous : {
 		
-			/*
-			* Time constant of excitatory neurons
-			*/
-			timeConstant = $timeConstant;
-			
 			/*
 			* This fraction of timeConstant is the step size of the forward euler solver
 			*/
@@ -454,7 +480,7 @@
 			*/
 			outputNeurons = false;
 			outputWeights = false;
-			outputAtTimeStepMultiple = $outputAtTimeStepMultiple;
+			outputAtTimeStepMultiple = $outputAtTimeStepMultiple; /* Only used in training, may lead to no output!, in testing only last time step is outputted*/
 		
 			/*
 			* Saving intermediate network states
@@ -499,21 +525,19 @@
 		*
 		* Order is relevant, goes V2,V3,...
 		*
-		* dimensions                    = the side of a square region. MUST BE EVEN and increasing with layers                                                                  classic: 32,32,32,32
-		* fanInRadius                   = radius of each gaussian connectivity cone betweene layers, only used with build command.                                      classic: 6,6,9,12
+		* dimensions                    = the side of a square region. MUST BE EVEN and increasing with layers                                                  classic: 32,32,32,32
+		* fanInRadius                   = radius of each gaussian connectivity cone betweene layers, only used with build command.                              classic: 6,6,9,12
 		* fanInCount                    = Number of connections into a neuron in V3 and above (connections from V1 to V2 have separate param: samplecount)      classic: 272,100,100,100
-		* learningRate                  = Learningrates used in hebbian&trace learning.                                                                                                 classic: 25,6.7,5.0,4.0
-		* etas                          = Etas used in trace learning in non V1 layers.                                                                                                 classic: 0.8,0.8,0.8,0.8
-		* sparsenessLevel               = Sparsity levels used for setSparse routine.                                                                                                   classic: 0.992,0.98,0.88,0.91
-		* sigmoidSlope                  = Sigmoid slope used in sigmoid activation function.                                                                                            classic: 190,40,75,26
-		* inhibitoryRadius              = Radius (sigma) parameter for inhibitory filter.                                                                                               classic: 1.38,2.7,4.0,6.0
-		* inhibitoryContrast            = Contrast (sigma) parameter for inhibitory filter.                                                                                             classic: 1.5,1.5,1.6,1.4
-		* inhibitoryWidth               = Size of each side of square inhibitory filter. MUST BE ODD.                                                                           classic: 7,11,17,25
-		* saveOutput                            = Whether or not this region is outputted                                                                                                                               ***
+		* learningRate                  = Learningrates used in hebbian&trace learning.                                                                         classic: 25,6.7,5.0,4.0
+		* etas                          = Etas used in trace learning in non V1 layers of discrete model, and used as time constant in continous model          classic: 0.8,0.8,0.8,0.8
+		* sparsenessLevel               = Sparsity levels used for setSparse routine.                                                                           classic: 0.992,0.98,0.88,0.91
+		* sigmoidSlope                  = Sigmoid slope used in sigmoid activation function.                                                                    classic: 190,40,75,26
+		* inhibitoryRadius              = Radius (sigma) parameter for inhibitory filter.                                                                       classic: 1.38,2.7,4.0,6.0
+		* inhibitoryContrast            = Contrast (sigma) parameter for inhibitory filter.                                                                     classic: 1.5,1.5,1.6,1.4
+		* inhibitoryWidth               = Size of each side of square inhibitory filter. MUST BE ODD.                                                           classic: 7,11,17,25
+		* saveOutput                    = Whether or not this region is outputted
 		*
 		* The following MUST be in decimal format: learningrate,eta,sparsenessLevel,sigmoidSlope,
-		*
-		*
 		*/
 		
 		extrastriate: (
@@ -532,6 +556,7 @@ TEMPLATE
 			$str .= "\t\tfanInCount        = ". $tmp{"fanInCount"} .";\n";
 			$str .= "\t\tlearningrate      = ". $tmp{"learningrate"} .";\n";
 			$str .= "\t\teta               = ". $tmp{"eta"} .";\n";
+			#$str .= "\t\ttimeConstant      = ". $tmp{"timeConstant"} .";\n";
 			$str .= "\t\tsparsenessLevel   = ". $tmp{"sparsenessLevel"} .";\n";
 			$str .= "\t\tsigmoidSlope      = ". $tmp{"sigmoidSlope"} .";\n";
 			$str .= "\t\tinhibitoryRadius  = ". $tmp{"inhibitoryRadius"} .";\n";

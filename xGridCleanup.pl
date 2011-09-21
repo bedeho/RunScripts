@@ -62,8 +62,19 @@
 	}
 
     my $experimentFolder = $PROJECTS_FOLDER.$project."/Simulations/".$experiment."/";
+    my $experimentFolderBackup = $PROJECTS_FOLDER.$project."/Simulations/".$experiment."_backup/";
+    # Make safe copy of experiment folder
+	print "Making backup of experiment folder...\n";
+	system("cp -r $experimentFolder $experimentFolderBackup") == 0 or die "Copying experiment folder $experimentFolder content into $experimentFolderBackup failed: $!";
+	
+	
     my $xgridResult = $PROJECTS_FOLDER.$project."/Xgrid/".$experiment."/";
-    
+    my $xgridResultBackup = $PROJECTS_FOLDER.$project."/Xgrid/".$experiment."_backup/";
+	# Make safe copy of xgrid result folder
+	print "Making backup of xgrid result folder...\n";
+	system("cp -r ${xgridResult} $xgridResultBackup") == 0 or die "Copying xgrid results $xgridResult content into $xgridResultBackup failed: $!";
+
+
 	open (F, "${experimentFolder}simulations.txt") || die "Could not open ${experimentFolder}simulations.txt: $!\n";
 	@lines = <F>;
 	close F;
@@ -72,6 +83,9 @@
 	system("mv ${xgridResult}* $experimentFolder") == 0 or die "Moving xgrid results $xgridResult content into $experimentFolder failed: $!";
 	
 	for(my $i = 0;$i < $#lines+1;$i++) {
+		
+		# Perhaps simulation never finished, or is not finished yet, if so skip it
+		next if not (-d "${experimentFolder}${i}");
 		
 		# Get name of parameter file
 		$file = $lines[$i];
