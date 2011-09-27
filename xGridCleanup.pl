@@ -67,13 +67,11 @@
 	print "Making backup of experiment folder...\n";
 	system("cp -r $experimentFolder $experimentFolderBackup") == 0 or die "Copying experiment folder $experimentFolder content into $experimentFolderBackup failed: $!";
 	
-	
     my $xgridResult = $PROJECTS_FOLDER.$project."/Xgrid/".$experiment."/";
     my $xgridResultBackup = $PROJECTS_FOLDER.$project."/Xgrid/".$experiment."_backup/";
 	# Make safe copy of xgrid result folder
 	print "Making backup of xgrid result folder...\n";
 	system("cp -r ${xgridResult} $xgridResultBackup") == 0 or die "Copying xgrid results $xgridResult content into $xgridResultBackup failed: $!";
-
 
 	open (F, "${experimentFolder}simulations.txt") || die "Could not open ${experimentFolder}simulations.txt: $!\n";
 	@lines = <F>;
@@ -93,7 +91,8 @@
 		# Check for trailing new line
 		chomp($file) if (substr($file, -1, 1) eq "\n");
 		
-		print "Processing $file..\n";
+		print "\nProcessing job $i: $file\n";
+		print "****************************************************************************************************\n";
 		
 		# Move it into dir
 		move($experimentFolder.$file, "${experimentFolder}${i}/Parameters.txt") or die "Moving parameter file $file failed: $!";

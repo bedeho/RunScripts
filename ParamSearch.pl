@@ -14,6 +14,7 @@
 
 	use File::Copy;
 	use Data::Dumper;
+	use Data::Compare;
 
 	########################################################################################
 	# VARS
@@ -74,6 +75,8 @@
 	my $stimuliFolder = $PROJECTS_FOLDER.$project."/Stimuli/".$stimuli."/";
     my $untrainedNet = $experimentFolder."BlankNetwork.txt";
     my $xgridResult = $PROJECTS_FOLDER.$project."/Xgrid/".$experiment."/";
+    
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
 	
     my $xgrid = 0;
 	if($#ARGV >= 3 && $ARGV[3] eq "xgrid") {
@@ -81,11 +84,11 @@
         $xgrid = 1;
         
         # Make xgrid file
-        open (XGRID_FILE, '>'.$experimentFolder.'xgrid.txt');
+        open (XGRID_FILE, '>'.$experimentFolder.'xgrid.txt') or die "Could not open file '${experimentFolder}xgrid.txt'. $!";
         print XGRID_FILE '-in '.substr($experimentFolder, 0, -1).' -files '.$stimuliFolder.'xgridPayload.tbz ';
         
         # Make simulation file
-        open (SIMULATIONS_FILE, '>'.$experimentFolder.'simulations.txt');
+        open (SIMULATIONS_FILE, '>'.$experimentFolder.'simulations.txt') or die "Could not open file '${experimentFolder}simulations.txt'. $!";
         
         # Make result directory
         mkdir($xgridResult);
@@ -135,56 +138,79 @@
     
 	# FIXED PARAMS - non permutable
 	# These are global!, used directly in param file
+	
+	
+	
+	# 2 is Trace
+	# 16 is CT
     my $wavelengths						= "{lambda = 2; fanInCount = 201;}"; # YOU MUST CHANGE LAMBDA SO THAT SIMULATOR CAN FIND PROPER INPUT FILE NAME
+    
+    
 	my $neuronType						= 1; # 0 = discrete, 1 = continuous
     my $learningRule					= 1; # 0 = trace, 1 = hebb
+    
     my $nrOfObjects						= 2;
     my $nrOfTransformations				= 9;
-    my $nrOfEpochs						= 100;
-    my $saveNetworkAtEpochMultiple 		= 50;
+    
+    my $nrOfEpochs						= 40;
+    my $saveNetworkAtEpochMultiple 		= 3000;
     my $saveNetworkAtTransformMultiple 	= $nrOfObjects * $nrOfTransformations;
-	my $outputAtTimeStepMultiple		= 100;
+	my $outputAtTimeStepMultiple		= 50;
     my $trainAtTimeStepMultiple			= 4; # only used in discrete model
     my $timeStepsPrInputFile	 		= 4; # only used in discrete model
     my $useInhibition					= "true"; # "false"
     my $resetTrace						= "true"; # "false"
     
     # RANGE PARAMS - permutable
+    ################################################################################################
     # Notice, layer one needs 3x because of small filter magnitudes, and 5x because of
     # number of afferent synapses, total 15x.
-    my @learningRates 				= ( #["150000.0","100000.0"	,"100000.0"	,"100000.0"],
-    									#["15000.0"	,"10000.0"	,"10000.0"	,"10000.0"],
-    									#["1500.0"	,"1000.0"	,"1000.0"	,"1000.0"],
-    									["150.0"	,"100.0"	,"100.0"	,"100.0"],
-    									["15.0"	,"10.0"		,"10.0"		,"10.0"]
-    									#["1.5"		,"0.1"		,"0.1"		,"0.1"], # 0.1 
-    									#["0.15"	,"0.01"		,"0.01"		,"0.01"] # 0.01 
-    									#["0.015"	,"0.001"	,"0.001"	,"0.001"], # 0.001 
-    									#["0.0015"	,"0.0001"	,"0.0001"	,"0.0001"], # 0.0001 
-    									#["0.00015"	,"0.00001"	,"0.00001"	,"0.00001"] # 0.00001 
-    									#["0.000015","0.000001"	,"0.000001"	,"0.000001"] # 0.000001
-    									);
-
-    my @sparsenessLevels			= ( #["0.75"	,"0.80"		,"0.88"		,"0.91"], # 0.91 
-    									#["0.80" 	,"0.85"		,"0.88"		,"0.95"], # 0.95
-    									#["0.85"	,"0.85"		,"0.88"		,"0.96"], # 0.96
-    									#["0.94"	,"0.90"		,"0.88"		,"0.90"], # 0.90
-    									["0.992"	,"0.98"		,"0.88"		,"0.91"]  # classic trace ("0.992"	,"0.98"	,"0.88"	,"0.91") 
-    									#["0.95"	,"0.90"		,"0.99"		,"0.99"]  # 0.99
-    									);
-    
-    # 1ms = "0.001", 5ms = "0.005", 10ms = "0.010", 100ms = "0.1"
-    my @etas						= ( ["0.100"	,"0.200"	,"0.400"	,"0.800"], # 0.100
-    									["0.100" 	,"0.400"	,"0.800"	,"1.200"], # 1.500
-    									["0.200"	,"0.600"	,"1.200"	,"2.000"]  # 3.000
+    my @learningRates 				= (     									
+    									["1.0"		,"0.3"		,"0.08"		,"0.08"],
+    									#["1.0"		,"0.3"		,"0.08"		,"0.01"],
+    									#["1.0"		,"0.3"		,"0.008"	,"0.001"],
+    									#["1.0"		,"0.3"		,"0.008"	,"0.0001"]
     									);
     									
- 	my @timePrTransform				= ("0.1","0.5","1.3","2.1","3.3","6.1","12.1"); #("0.01","0.05","0.5"); # TIME EACH TRANSFORM IS ACTIVE/USED AS INPUT
+ 	die "Invalid array: learningRates" if !validateArray(\@learningRates);
+	################################################################################################
+    my @sparsenessLevels			= ( 
+    									#["0.992"	,"0.98"		,"0.88"		,"0.91"],
+    									["0.992"	,"0.98"		,"0.88"		,"0.85"],
+    									#["0.992"	,"0.98"		,"0.80"		,"0.85"],
+    									["0.992"	,"0.98"		,"0.75"		,"0.80"]
+    									#["0.992"	,"0.98"		,"0.70"		,"0.80"],
+    									
+    									#["0.992"	,"0.90"		,"0.88"		,"0.91"],
+    									["0.992"	,"0.90"		,"0.88"		,"0.85"],
+    									#["0.992"	,"0.90"		,"0.80"		,"0.85"],
+    									#["0.992"	,"0.90"		,"0.75"		,"0.80"]
+    									
+    									["0.992"	,"0.90"		,"0.70"		,"0.80"]
+    									);
+    die "Invalid array: sparsenessLevels" if !validateArray(\@sparsenessLevels);
+    ################################################################################################
     
-    my @stepSizeFraction			= ("0.1","0.05"); # 0.1 = 1/10, 0.05 = 1/20, 0.02 = 1/50
-    
+    my @etas						= ( #["0.050"	,"0.100"	,"0.400"	,"0.800"], # 0.100
+    									#["0.050" 	,"0.200"	,"0.800"	,"1.200"], # 1.500
+    									#["0.010"	,"0.050"	,"0.120"	,"0.200"],  # 3.000
+    									#["0.010"	,"0.150"	,"0.120"	,"0.200"],  # 3.000
+    									#["0.010"	,"0.050"	,"0.320"	,"0.400"],  # 3.000
+    									#["0.010"	,"0.150"	,"0.320"	,"0.400"],  # 3.000
+    									#["0.010"	,"0.050"	,"0.420"	,"0.600"],  # 3.000
+    									["0.010"	,"0.150"	,"0.420"	,"0.600"]  # 3.000
+    									);
+    die "Invalid array: etas" if !validateArray(\@etas);
+    ################################################################################################								
+ 	my @timePrTransform				= ("0.1"); #("0.01","0.05","0.5"); # TIME EACH TRANSFORM IS ACTIVE/USED AS INPUT
+ 	die "Invalid array: timePrTransform" if !validateArray(\@timePrTransform);
+ 	################################################################################################
+    my @stepSizeFraction			= ("0.1"); #,"0.05"); #, 0.1 = 1/10, 0.05 = 1/20, 0.02 = 1/50
+    die "Invalid array: stepSizeFraction" if !validateArray(\@stepSizeFraction);
+    ################################################################################################
     my @traceTimeConstant			= ("0.1"); #("0.1", "0.05", "0.01")
-
+	die "Invalid array: traceTimeConstant" if !validateArray(\@traceTimeConstant);
+	################################################################################################
     my $firstTime = 1;
     
 	#for my $t (@trainAtTimeStepMultiple) {
@@ -230,35 +256,38 @@
 											
 											# Build name so that only varying parameters are included.
 											my $simulationCode = "";
-											$simulationCode .= "tpT${tpT}_" if scalar(@timePrTransform) > 1;
-											$simulationCode .= "E${etastr}_" if scalar(@etas) > 1;
-											$simulationCode .= "sSF${sSF}_" if scalar(@stepSizeFraction) > 1;
-											$simulationCode .= "ttC${ttC}_" if scalar(@traceTimeConstant) > 1;
-											$simulationCode .= "L${Lstr}_" if scalar(@learningRates) > 1;
-											$simulationCode .= "S${Sstr}_" if scalar(@sparsenessLevels) > 1;
+											$simulationCode .= "tpT=${tpT}_" if scalar(@timePrTransform) > 1;
+											$simulationCode .= "E=${etastr}_" if scalar(@etas) > 1;
+											$simulationCode .= "sSF=${sSF}_" if scalar(@stepSizeFraction) > 1;
+											$simulationCode .= "ttC=${ttC}_" if scalar(@traceTimeConstant) > 1;
+											$simulationCode .= "L=${Lstr}_" if scalar(@learningRates) > 1;
+											$simulationCode .= "S=${Sstr}_" if scalar(@sparsenessLevels) > 1;
+											
+											# If there is only a single parameter combination being explored, then just give a long precise name,
+											# it's essentially not a parameter search.
+											$simulationCode = "tpT=${tpT}_E=${etastr}_sSF=${sSF}_ttC=${ttC}_L=${Lstr}_S=${Sstr}_" if $simulationCode eq "";
 											
 											# Number of timesteps pr. transform
 											my $nrOfTimeSteps = floor($tpT/($minTc * $sSF));
 											
 											# Test that there are actual time steps in continous case, and
 											# that it is sufficient to get nonzero stimulation to the top region
-											next if ($neuronType == 1 && ($nrOfTimeSteps == 0 || $nrOfTimeSteps < $pathWayLength));	
-								
-											#"_I".$ui.
-											#"_RT".$rt
-											#"_T".$t
-											#"_Ti".$tPrFiles
-											#"_E".$nrOfEpochs
+											next if ($neuronType == 1 && ($nrOfTimeSteps == 0 || $nrOfTimeSteps < $pathWayLength));
+																						
+											my $timeStepStr = "";
+											#$timeStepStr = "\t\t\t\t\t| $nrOfEpochs |\t $nrOfObjects |\t $nrOfTransformations |\t $nrOfTimeSteps" if $neuronType == 1;
+											$timeStepStr = "\t\t $nrOfTimeSteps" if $neuronType == 1;
 											
 											if($xgrid) {
 												
 												my $parameterFile = $experimentFolder.$simulationCode.".txt";
 												
 												# Make parameter file
-												print "Writing new parameter file: ". $simulationCode ." \n";
+												print "\tWriting new parameter file: ". $simulationCode . $timeStepStr . " \n";
+												
 												my $result = makeParameterFile(\@esRegionSettings, $sSF, $ttC, $tpT);
 												
-												open (PARAMETER_FILE, '>'.$parameterFile);
+												open (PARAMETER_FILE, '>'.$parameterFile) or die "Could not open file '$parameterFile'. $!";
 												print PARAMETER_FILE $result;
 												close (PARAMETER_FILE);
 												
@@ -288,10 +317,10 @@
 													mkdir($simulationFolder, 0777) || print $!;
 													
 													# Make parameter file and write to simulation folder
-													print "Writing new parameter file: ". $simulationCode ." \n";
+													print "Writing new parameter file: ". $simulationCode  . $timeStepStr . " \n";
 													my $result = makeParameterFile(\@esRegionSettings, $sSF, $ttC, $tpT);
 													
-													open (PARAMETER_FILE, '>'.$parameterFile);
+													open (PARAMETER_FILE, '>'.$parameterFile) or die "Could not open file '$parameterFile'. $!";
 													print PARAMETER_FILE $result;
 													close (PARAMETER_FILE);
 													
@@ -341,11 +370,27 @@
 		system($MATLAB . " -r \"cd('$MATLAB_SCRIPT_FOLDER');plotExperimentInvariance('$project','$experiment');\"");	
 	}
 	
-	#		/*
-	#		* Time constant of excitatory neurons
-	#		*/
-	#		timeConstant = $timeConstant;
+	sub validateArray {
+		
+		my ($input) = @_;
 
+		my @arr = @{$input};
+		my $length = scalar (@arr);
+		
+	   	for(my $i = 0;$i < $length;$i++) {
+	   		for(my $j = 0;$j < $length;$j++) {
+	   			
+	   			# Dont compare with itself
+	   			next if ($i == $j);
+	   			
+	   			# Compare (supports both scalar and references)
+	   			return 0 if Compare($arr[$i], $arr[$j]);
+	    	}
+	    }
+
+		return 1;
+	}
+			
 	sub makeParameterFile {
 		
 		my ($a, $stepSizeFraction, $traceTimeConstant, $timePrTransform) = @_;
@@ -389,13 +434,7 @@
 			* This fraction of timeConstant is the step size of the forward euler solver
 			*/
 			stepSizeFraction = $stepSizeFraction;
-			
-			/*
-			* Time constant of trace term in continous case, analogous
-			* to \eta in discrete case.
-			*/
-			traceTimeConstant = $traceTimeConstant;
-			
+						
 			/*
 			* Time used on each transform, the number of time steps
 			* pr. transform is therefor: floor(timePrTransform/(traceTimeConstant * stepSizeFraction));
