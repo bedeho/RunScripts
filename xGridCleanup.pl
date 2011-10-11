@@ -7,68 +7,59 @@
 	#  Created by Bedeho Mender on 29/04/11.
 	#  Copyright 2011 OFTNAI. All rights reserved.
 	#
+	
+	use strict;
+    use warnings;
+    use POSIX;
 
 	use File::Copy;
 	use Data::Dumper;
+	use Data::Compare;
 
 	########################################################################################
-	# VARS
+	# VARS	
+	########################################################################################	
+	my $BASE					= "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/";  # must have trailing slash, "D:/Oxford/Work/Projects/"
 	########################################################################################
-	
-	# office
-	$PROJECTS_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/";  # must have trailing slash
-	$PERL_RUN_SCRIPT = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/RunScripts/Run.pl";
-	$MATLAB_SCRIPT_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/Scripts/VisBackMatlabScripts/";  # must have trailing slash
-	$MATLAB = "/Volumes/Applications/MATLAB_R2010b.app/bin/matlab -nosplash -nodisplay"; # -nodesktop
-	
-	# laptop must have trailing slash
-	#$PROJECTS_FOLDER = "D:/Oxford/Work/Projects/";  # must have trailing slash
-	#$PERL_RUN_SCRIPT = "C:/MinGW/msys/1.0/home/Mender/Run.pl";
-	#$MATLAB_SCRIPT_FOLDER = "D:/Oxford/Work/Projects/VisBack/VisBackScripts/";  # must have trailing slash
-	#$MATLAB = "matlab -nojvm -nodisplay -nosplash ";
-	
+	my $PERL_RUN_SCRIPT 		= $BASE."Scripts/Run/RunScripts/Run.pl";
+	my $MATLAB_SCRIPT_FOLDER 	= $BASE."Scripts/Analysis/";  # must have trailing slash
+	my $MATLAB 					= "/Volumes/Applications/MATLAB_R2010b.app/bin/matlab -nosplash -nodisplay"; # -nodesktop 
 	########################################################################################
 
 	if($#ARGV < 0) {
 
 		print "To few arguments passed.\n";
 		print "Usage:\n";
-		print "Arg. 1: project name\n";
-		print "Arg. 2: experiment name\n";
-		print "Arg. 3: stimuli name\n";
+		print "Arg. 1: experiment name\n";
+		print "Arg. 2: stimuli name\n";
 		exit;
 	}
 	
-	my $project;
-	if($#ARGV >= 0) {
-        $project = $ARGV[0];
-	} else {
-        die "No project name provided\n";
-	}
-	
 	my $experiment;
-	if($#ARGV >= 1) {
-        $experiment = $ARGV[1];
+	if($#ARGV >= 0) {
+        $experiment = $ARGV[0];
 	}
 	else {
 		die "No experiment name provided\n";
 	}
 	
 	my $stimuli;
-	if($#ARGV >= 2) {
-        $stimuli = $ARGV[2];
+	if($#ARGV >= 1) {
+        $stimuli = $ARGV[1];
 	} else {
         die "No stimuli name provided\n";
 	}
 
-    my $experimentFolder = $PROJECTS_FOLDER.$project."/Simulations/".$experiment."/";
-    my $experimentFolderBackup = $PROJECTS_FOLDER.$project."/Simulations/".$experiment."_backup/";
+    my $experimentFolder 		= $BASE."Experiments/".$experiment."/";
+    my $experimentFolderBackup	= $BASE."Experiments/".$experiment."_backup/";
+    
     # Make safe copy of experiment folder
 	print "Making backup of experiment folder...\n";
 	system("cp -r $experimentFolder $experimentFolderBackup") == 0 or die "Copying experiment folder $experimentFolder content into $experimentFolderBackup failed: $!";
 	
-    my $xgridResult = $PROJECTS_FOLDER.$project."/Xgrid/".$experiment."/";
-    my $xgridResultBackup = $PROJECTS_FOLDER.$project."/Xgrid/".$experiment."_backup/";
+    my $xgridResult = $BASE."/Xgrid/".$experiment."/";
+    my $xgridResultBackup = $BASE."/Xgrid/".$experiment."_backup/";
+    
 	# Make safe copy of xgrid result folder
 	print "Making backup of xgrid result folder...\n";
 	system("cp -r ${xgridResult} $xgridResultBackup") == 0 or die "Copying xgrid results $xgridResult content into $xgridResultBackup failed: $!";
@@ -116,11 +107,11 @@
 		move($experimentFolder.$i, $experimentFolder.$simulation) or die "Renaming folder ${experimentFolder}${simulation} failed: $!";
 		
 		# Run test
-		system($PERL_RUN_SCRIPT, "test", $project, $experiment, $simulation, $stimuli);
+		system($PERL_RUN_SCRIPT, "test", $experiment, $simulation, $stimuli);
 	}
 	
 	# Call matlab to plot all
-	system($MATLAB . " -r \"cd('$MATLAB_SCRIPT_FOLDER');plotExperimentInvariance('$project','$experiment');\"");
+	system($MATLAB . " -r \"cd('$MATLAB_SCRIPT_FOLDER');plotExperimentInvariance('$experiment');\"");
 
 	# Check to see that all results are back
     #my $sleepTime = 30;
