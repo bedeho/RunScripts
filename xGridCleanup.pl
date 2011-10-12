@@ -21,7 +21,7 @@
 	########################################################################################	
 	my $BASE					= "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/";  # must have trailing slash, "D:/Oxford/Work/Projects/"
 	########################################################################################
-	my $PERL_RUN_SCRIPT 		= $BASE."Scripts/Run/RunScripts/Run.pl";
+	my $PERL_RUN_SCRIPT 		= $BASE."Scripts/Run/Run.pl";
 	my $MATLAB_SCRIPT_FOLDER 	= $BASE."Scripts/Analysis/";  # must have trailing slash
 	my $MATLAB 					= "/Volumes/Applications/MATLAB_R2010b.app/bin/matlab -nosplash -nodisplay"; # -nodesktop 
 	########################################################################################

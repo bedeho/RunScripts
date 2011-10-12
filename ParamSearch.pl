@@ -15,13 +15,15 @@
 	use File::Copy;
 	use Data::Dumper;
 	use Data::Compare;
+	use Cwd 'abs_path';
 
 	########################################################################################
 	# VARS
 	########################################################################################
 	my $BASE 					= "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/";  # must have trailing slash, "D:/Oxford/Work/Projects/"
 	########################################################################################
-	my $PERL_RUN_SCRIPT 		= $BASE."Scripts/Run/RunScripts/Run.pl";
+	my $PERL_RUN_SCRIPT 		= $BASE."Scripts/Run/Run.pl";
+	my $PROGRAM					= $BASE."Source/build/Release/VisBack";
 	my $MATLAB_SCRIPT_FOLDER 	= $BASE."Scripts/Analysis/";  # must have trailing slash
 	my $MATLAB 					= "/Volumes/Applications/MATLAB_R2010b.app/bin/matlab -nosplash -nodisplay"; # -nodesktop
 	########################################################################################
@@ -57,41 +59,42 @@
     my $untrainedNet 			= $experimentFolder."BlankNetwork.txt";
     
     my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
-	
-    my $xgrid = 0;
-	if($#ARGV >= 2 && $ARGV[2] eq "xgrid") {
-		
-        $xgrid = 1;
-        
-        # Make xgrid file
-        open (XGRID_FILE, '>'.$experimentFolder.'xgrid.txt') or die "Could not open file '${experimentFolder}xgrid.txt'. $!";
-        print XGRID_FILE '-in '.substr($experimentFolder, 0, -1).' -files '.$stimuliFolder.'xgridPayload.tbz ';
-        
-        # Make simulation file
-        open (SIMULATIONS_FILE, '>'.$experimentFolder.'simulations.txt') or die "Could not open file '${experimentFolder}simulations.txt'. $!";
-        
-        # Make result directory
-        mkdir($xgridResult);
-	}
-
-    my $pathWayLength		= 4;
     
+    ################################################################################################################################################################################################
+    ################################################################################################################################################################################################
+	
     # Build template parameter file from these
     # The parameters that are covaried are written as "fail" so that new values
     # are ensured to be put in at some point
+    my $pathWayLength			= 4;
+    
     my @dimension				= (32,32,32,32);
     my @depth					= (1,1,1,1);
     my @fanInRadius 			= (6,6,9,12);
     my @fanInCount 				= (100,100,100,100);
-    my @learningrate			= ("fail","fail","fail","fail");
+    my @learningrate			= ("0.1","0.1","0.1","0.1"); # < === is permuted below
     my @eta						= ("0.8","0.8","0.8","0.8");
-    my @timeConstant			= ("fail","fail","fail","fail");
-    my @sparsenessLevel			= ("fail","fail","fail","fail");
+    my @timeConstant			= ("0.1","0.1","0.1","0.1"); # < === is permuted below
+    my @sparsenessLevel			= ("0.1","0.1","0.1","0.1"); # < === is permuted below
     my @sigmoidSlope 			= ("190.0","40.0","75.0","26.0");
     my @inhibitoryRadius		= ("1.38","2.7","4.0","6.0");
     my @inhibitoryContrast		= ("1.5","1.5","1.6","1.4");
     my @inhibitoryWidth			= (7,11,17,25);
-
+    
+    print "Uneven parameter length." if 
+    	$pathWayLength != scalar(@dimension) || 
+    	$pathWayLength != scalar(@depth) || 
+    	$pathWayLength != scalar(@fanInRadius) || 
+    	$pathWayLength != scalar(@fanInCount) || 
+    	$pathWayLength != scalar(@learningrate) || 
+    	$pathWayLength != scalar(@eta) || 
+    	$pathWayLength != scalar(@timeConstant) ||
+    	$pathWayLength != scalar(@sparsenessLevel) ||
+    	$pathWayLength != scalar(@sigmoidSlope) ||
+    	$pathWayLength != scalar(@inhibitoryRadius) ||
+    	$pathWayLength != scalar(@inhibitoryContrast) ||
+    	$pathWayLength != scalar(@inhibitoryWidth);
+    	    	    	    	    	    
     my @esRegionSettings;
    	for(my $r = 0;$r < $pathWayLength;$r++) {
 
@@ -111,12 +114,13 @@
 
          push @esRegionSettings, \%region;
     }
-
+    
     # Generate all combinations of these parameters
     # GENERALIZE THIS LOUSY CODE !!! LATER USING ASSOCIATIVE ARRAYS
     # AND PARTITIONING PARAMS INTO GENERAL AND LAYER PARAMS
     # do recursive perumtation and send result key->val map to
     # makeParameterFile in bottom of recursion
+    #my $saveNetworkAtTransformMultiple 	= $nrOfObjects * $nrOfTransformations;
 	
 	# FIXED PARAMS - non permutable
 	# lambda=2 is Trace
@@ -129,9 +133,8 @@
     my $nrOfObjects						= 2;
     my $nrOfTransformations				= 9;
     
-    my $nrOfEpochs						= 300;
+    my $nrOfEpochs						= 3;
     my $saveNetworkAtEpochMultiple 		= 99;
-    my $saveNetworkAtTransformMultiple 	= $nrOfObjects * $nrOfTransformations;
 	my $outputAtTimeStepMultiple		= 101;
     my $trainAtTimeStepMultiple			= 4; # only used in discrete model
     my $timeStepsPrInputFile	 		= 4; # only used in discrete model
@@ -139,7 +142,6 @@
     my $resetTrace						= "true"; # "false"
     
     # RANGE PARAMS - permutable
-    ################################################################################################
     # Notice, layer one needs 3x because of small filter magnitudes, and 5x because of
     # number of afferent synapses, total 15x.
     my @learningRates 				= ( 
@@ -157,7 +159,7 @@
     									);
     									
  	die "Invalid array: learningRates" if !validateArray(\@learningRates);
-	################################################################################################
+
     my @sparsenessLevels			= ( 
     									# Trace
     									#["0.992"	,"0.980"	,"0.880"	,"0.800"],
@@ -179,7 +181,7 @@
     									#["0.992"	,"0.900"	,"0.800"	,"0.990"]
     									
     									#["0.992"	,"0.800"	,"0.700"	,"0.700"],
-    									["0.992"	,"0.800"	,"0.700"	,"0.800"],
+    									#["0.992"	,"0.800"	,"0.700"	,"0.800"],
     									["0.992"	,"0.800"	,"0.700"	,"0.900"]
     									
     									###["0.992"	,"0.900"	,"0.700"	,"0.700"]
@@ -196,7 +198,6 @@
     									#["0.992"	,"0.900"	,"0.700"	,"0.900"]
     									);
     die "Invalid array: sparsenessLevels" if !validateArray(\@sparsenessLevels);
-    ################################################################################################
     
     my @timeConstants				= ( 
     									#["0.050"	,"0.050"	,"0.050"	,"0.050"]
@@ -206,7 +207,7 @@
     									#["0.010"	,"0.030"	,"0.090"	,"0.300"],
     									#["0.010"	,"0.030"	,"0.100"	,"0.300"],
     									
-    									["0.010"	,"0.050"	,"0.100"	,"0.400"],
+    									#["0.010"	,"0.050"	,"0.100"	,"0.400"],
     									#["0.010"	,"0.050"	,"0.150"	,"0.400"],
     									#["0.010"	,"0.050"	,"0.250"	,"0.400"],
     									
@@ -222,17 +223,76 @@
     									#["0.010"	,"0.050"	,"0.100"	,"0.200"]
     									);
     die "Invalid array: timeConstants" if !validateArray(\@timeConstants);
-    ################################################################################################								
+    								
  	my @timePrTransform				= ("0.150"); # TIME EACH TRANSFORM IS ACTIVE/USED AS INPUT
  	die "Invalid array: timePrTransform" if !validateArray(\@timePrTransform);
- 	################################################################################################
-    my @stepSizeFraction			= ("0.1"); #("3.00","2.00","1.00","0.500","0.100","0.050","0.02"); #,"0.050"); #, 0.1 = 1/10, 0.05 = 1/20, 0.02 = 1/50
+ 	
+    my @stepSizeFraction			= ("0.5"); #("3.00","2.00","1.00","0.500","0.100","0.050","0.02"); #,"0.050"); #, 0.1 = 1/10, 0.05 = 1/20, 0.02 = 1/50
     die "Invalid array: stepSizeFraction" if !validateArray(\@stepSizeFraction);
-    ################################################################################################
+    
     my @traceTimeConstant			= ("1.500"); #("0.100", "0.050", "0.010")
 	die "Invalid array: traceTimeConstant" if !validateArray(\@traceTimeConstant);
-	################################################################################################
+    ################################################################################################################################################################################################
+    ################################################################################################################################################################################################
+    
     my $firstTime = 1;
+    
+    # Check if experiment folder exists
+	if(not -d $experimentFolder) {
+		
+		# Make experiment folder
+		mkdir($experimentFolder);
+		
+		# Copy file list to experiment folder
+		copy($stimuliFolder."FileList.txt", $experimentFolder."FileList.txt") or die "Cannot make copy of file list: $!";
+		
+		# Copy VisBack binary if this is xgrid run
+        copy($PROGRAM, $experimentFolder."VisBack") or die "Cannot make copy of binary: $!" if ($#ARGV >= 2 && $ARGV[2] eq "xgrid");
+		
+		# Make blank network *****************
+			
+			# Make temporary parameter file
+			my $tmpParameterFile = $experimentFolder."Parameters.txt";
+			my $result = makeParameterFile(\@esRegionSettings, "0.1", "0.1", "0.1");
+			open (PARAMETER_FILE, '>'.$tmpParameterFile) or die "Could not open file '$tmpParameterFile'. $!";
+			print PARAMETER_FILE $result;
+			close (PARAMETER_FILE);
+			
+			# Run build command
+			system($PERL_RUN_SCRIPT, "build", $experiment);
+			
+			# Remove temporary file
+			unlink($tmpParameterFile);
+			
+		# Make blank network *****************
+	}
+
+	# Make xgrid file, simulation file, xgrid result folder
+    my $xgrid = 0;
+	if($#ARGV >= 2 && $ARGV[2] eq "xgrid") {
+		
+        $xgrid = 1;
+        
+        # Make xgrid file
+        open (XGRID_FILE, '>'.$experimentFolder.'xgrid.txt') or die "Could not open file '${experimentFolder}xgrid.txt'. $!";
+        print XGRID_FILE '-in '.substr($experimentFolder, 0, -1).' -files '.$stimuliFolder.'xgridPayload.tbz ';
+        
+        # Make simulation file
+        open (SIMULATIONS_FILE, '>'.$experimentFolder.'simulations.txt') or die "Could not open file '${experimentFolder}simulations.txt'. $!";
+        
+        # Only do on making folder ?
+        ## Copy VisBack binary
+        ##copy($PROGRAM, $experimentFolder."VisBack") or die "Cannot make copy of binary: $!";
+                
+        # Make result directory
+        mkdir($xgridResult);
+	}
+	
+	# Copy blank network into folder so that we can do control test automatically
+    my $thisScript = abs_path($0);
+	copy($thisScript, $experimentFolder."ParametersCopy.pl") or die "Cannot make copy of parameter file: $!";
+    ################################################################################################################################################################################################
+    ################################################################################################################################################################################################
     
 	#for my $t (@trainAtTimeStepMultiple) {
 		#for my $tPrFile (@timeStepsPrInputFile) {
@@ -410,6 +470,16 @@
 
 		return 1;
 	}
+	
+	# http://www.somacon.com/p114.php
+	# Perl trim function to remove whitespace from the start and end of the string
+	sub trim($)
+	{
+		my $string = shift;
+		$string =~ s/^\s+//;
+		$string =~ s/\s+$//;
+		return $string;
+	}
 			
 	sub makeParameterFile {
 		
@@ -421,212 +491,207 @@
 		my $stamp = join(' ', @timeData);
 
 	    my $str = <<"TEMPLATE";
-		/*
-		*
-		* GENERATED IN ParamSearch.pl on $stamp
-		*
-		* VisBack parameter file
-		*
-		* Created by Bedeho Mender on 02/02/11.
-		* Copyright 2010 OFTNAI. All rights reserved.
-		*
-		* Note:
-		* This parameter file follows the libconfig hierarchical
-		* configuration file format, see:
-		* http://www.hyperrealm.com/libconfig/libconfig_manual.html#Introducion
-		* The values of some parameters may cause
-		* other parameters to not be used, but ALL must
-		* always be present for parsing.
-		* New content adhering to the libconfig standard
-		* is not harmful.
-		*/
-		
-		/*
-		* Tells run command what type
-		* of activation function to use:
-		* 0 = rate coded, 1 = leaky integrator
-		*/
-		neuronType = $neuronType;
-		
-		continuous : {
-		
-			/*
-			* This fraction of timeConstant is the step size of the forward euler solver
-			*/
-			stepSizeFraction = $stepSizeFraction;
-						
-			/*
-			* Time used on each transform, the number of time steps
-			* pr. transform is therefor: floor(timePrTransform/(traceTimeConstant * stepSizeFraction));
-			*/
-			timePrTransform = $timePrTransform;
-			
-			/*
-			* Time constant for trace term
-			*/
-			traceTimeConstant = $traceTimeConstant;
-		};
-		
-		/*
-		* Only used in build command:
-		* No feedback = 0, symmetric feedback = 1, probabilistic feedback = 2
-		*/
-		feedback = 0;
-		
-		/*
-		* Only used in build command:
-		* The initial weight set on synapses
-		* 0 = zero, 1 = same [0,1] uniform random weight used feedbackorward&backward,
-		* 2 = two independent [0,1] uniform random weights used forward&backward
-		*/
-		initialWeight = 1;
-		
-		/*
-		* What type of weight normalization will be applied after learning.
-		* If there is no learning, then there will be no normalization.
-		* 0 = none, 1 = classic vector normalization
-		*/
-		weightNormalization = 1;
-		
-		/*
-		* What type of sparsification routine to apply.
-		* 0 = none, 1 = qsort based, 2 = heap based (FAST - recommended)
-		*/
-		sparsenessRoutine = 2;
-		
-		/*
-		* Whether or not to apply inhibition
-		*/
-		useInhibition = $useInhibition;
-		
-		/*
-		* ONLY USED IN DISCRETE CASE: 
-		* Number of time steps pr. input file,
-		* in continous case we use timePrTransform
-		
-		* In practice MUST be at least the length of pathway (including v1)-1
-		* BE AWARE THAT IF THERE IS NO FEEDBACK, THEN THERE IS NO POINT IN HAVING THIS PARAM
-		* LARGER THEN SIZE OF EXTRA STRIATE PATHWAY.
-		*/
-		timeStepsPrInputFile = $timeStepsPrInputFile;
-		
-		/*
-		* Only used in build command:
-		* Random seed used to setup initial weight strength
-		* and setup connectivity based on radii parameter.
-		*/
-		seed = 55;
-		
-		training: {
-		
-	        /*
-	        * What type of learning rule to apply.
-	        * 0 = trace, 1 = hebbian
-	        */
-	        rule = $learningRule;
-	
-	        /*
-	        * Whether or not to reset trace value
-	        */
-	        resetTrace = $resetTrace;
-	
-	        /*
-	        * ONLY USED IN DISCRETE CASE:
-	        * Restrict training in all layers to timesteps for a given transform
-	        * that are multiples of this value (= 1 => every time step).
-	        */
-	        trainAtTimeStepMultiple = $trainAtTimeStepMultiple;
-		};
-		
-		output: {
-			/*
-			* Parameters controlling what values to output,what layers is governed by "output" parameter in each layer.
-			*/
-			outputNeurons = false;
-			outputWeights = false;
-			outputAtTimeStepMultiple = $outputAtTimeStepMultiple; /* Only used in training, may lead to no output!, in testing only last time step is outputted*/
-		
-			/*
-			* Saving intermediate network states
-			* as independent network files
-			*/
-			saveNetwork = true;
-			saveNetworkAtEpochMultiple = $saveNetworkAtEpochMultiple;
-			saveNetworkAtTransformMultiple = $saveNetworkAtTransformMultiple; /* This is transform multiples within each epoch, not within each object */
-		};
-		
-		stimuli: {
-	        nrOfObjects = $nrOfObjects; /* Number of objects, is not used directly, but rather dumped into output files for matlab convenience */
-	        nrOfTransformations = $nrOfTransformations; /* #transforms pr. object, is not used directly, but rather dumped into output files for matlab convenience  */
-	        nrOfEpochs = $nrOfEpochs; /* An epoch is one run through the file list, and the number of epochs can be no less then 1 */
-		};
-		
-		v1: {
-	        dimension = 128; /* Classic value: 128 */
-	
-	        /*
-	        * The next values are for the parameter values used by the Gabor filter that produced the input to this netwok,
-	        * The parameter values are required to be able to deduce the input file names and to process the files properly,
-	        * as well as setup V1 structure.
-	        * Parameter explanation : http://matlabserver.cs.rug.nl/edgedetectionweb/web/edgedetection_params.html
-	        * Good visualization tool : http://www.cs.rug.nl/~imaging/simplecell.html
-	        *
-	        * NOTE: All filter params except .count must be in decimal form!, otherwise
-	        * the libconfig will throw a SettingTypeException exception.
-	        */
-	        filter: {
-                phases = (0.0,180.0,90.0,-90.0);                           /* on/off bar detectors*/
-                orientations = (0.0,45.0,90.0,135.0);
+/*
+*
+* GENERATED IN ParamSearch.pl on $stamp
+*
+* VisBack parameter file
+*
+* Created by Bedeho Mender on 02/02/11.
+* Copyright 2010 OFTNAI. All rights reserved.
+*
+* Note:
+* This parameter file follows the libconfig hierarchical
+* configuration file format, see:
+* http://www.hyperrealm.com/libconfig/libconfig_manual.html#Introducion
+* The values of some parameters may cause
+* other parameters to not be used, but ALL must
+* always be present for parsing.
+* New content adhering to the libconfig standard
+* is not harmful.
+*/
 
-                /* lambda is a the param, count is the number of V2 projections from each wavelength (subsampling) */
-                /* Visnet values for count: 201,50,13,8 */
-                wavelengths = ( $wavelengths );
-			};
-		};
+/*
+* Tells run command what type
+* of activation function to use:
+* 0 = rate coded, 1 = leaky integrator
+*/
+neuronType = $neuronType;
+
+continuous : {
+	/*
+	* This fraction of timeConstant is the step size of the forward euler solver
+	*/
+	stepSizeFraction = $stepSizeFraction;
+				
+	/*
+	* Time used on each transform, the number of time steps
+	* pr. transform is therefor: floor(timePrTransform/(traceTimeConstant * stepSizeFraction));
+	*/
+	timePrTransform = $timePrTransform;
+	
+	/*
+	* Time constant for trace term
+	*/
+	traceTimeConstant = $traceTimeConstant;
+};
+
+/*
+* Only used in build command:
+* No feedback = 0, symmetric feedback = 1, probabilistic feedback = 2
+*/
+feedback = 0;
+
+/*
+* Only used in build command:
+* The initial weight set on synapses
+* 0 = zero, 1 = same [0,1] uniform random weight used feedbackorward&backward,
+* 2 = two independent [0,1] uniform random weights used forward&backward
+*/
+initialWeight = 1;
+
+/*
+* What type of weight normalization will be applied after learning.
+* If there is no learning, then there will be no normalization.
+* 0 = none, 1 = classic vector normalization
+*/
+weightNormalization = 1;
+
+/*
+* What type of sparsification routine to apply.
+* 0 = none, 1 = qsort based, 2 = heap based (FAST - recommended)
+*/
+sparsenessRoutine = 2;
+
+/*
+* Whether or not to apply inhibition
+*/
+useInhibition = $useInhibition;
+
+/*
+* ONLY USED IN DISCRETE CASE: 
+* Number of time steps pr. input file,
+* in continous case we use timePrTransform
+
+* In practice MUST be at least the length of pathway (including v1)-1
+* BE AWARE THAT IF THERE IS NO FEEDBACK, THEN THERE IS NO POINT IN HAVING THIS PARAM
+* LARGER THEN SIZE OF EXTRA STRIATE PATHWAY.
+*/
+timeStepsPrInputFile = $timeStepsPrInputFile;
+
+/*
+* Only used in build command:
+* Random seed used to setup initial weight strength
+* and setup connectivity based on radii parameter.
+*/
+seed = 55;
+
+training: {
+	/*
+	* What type of learning rule to apply.
+	* 0 = trace, 1 = hebbian
+	*/
+	rule = $learningRule;
+	
+	/*
+	* Whether or not to reset trace value
+	*/
+	resetTrace = $resetTrace;
+	
+	/*
+	* ONLY USED IN DISCRETE CASE:
+	* Restrict training in all layers to timesteps for a given transform
+	* that are multiples of this value (= 1 => every time step).
+	*/
+	trainAtTimeStepMultiple = $trainAtTimeStepMultiple;
+};
+
+output: {
+	/*
+	* Parameters controlling what values to output,what layers is governed by "output" parameter in each layer.
+	*/
+	outputNeurons = false;
+	outputWeights = false;
+	outputAtTimeStepMultiple = $outputAtTimeStepMultiple; /* Only used in training, may lead to no output!, in testing only last time step is outputted*/
+	
+	/*
+	* Saving intermediate network states
+	* as independent network files
+	*/
+	saveNetwork = true;
+	saveNetworkAtEpochMultiple = $saveNetworkAtEpochMultiple;
+};
+
+stimuli: {
+	nrOfObjects = $nrOfObjects; /* Number of objects, is not used directly, but rather dumped into output files for matlab convenience */
+	nrOfTransformations = $nrOfTransformations; /* #transforms pr. object, is not used directly, but rather dumped into output files for matlab convenience  */
+	nrOfEpochs = $nrOfEpochs; /* An epoch is one run through the file list, and the number of epochs can be no less then 1 */
+};
+
+v1: {
+	dimension = 128; /* Classic value: 128 */
+	
+	/*
+	* The next values are for the parameter values used by the Gabor filter that produced the input to this netwok,
+	* The parameter values are required to be able to deduce the input file names and to process the files properly,
+	* as well as setup V1 structure.
+	* Parameter explanation : http://matlabserver.cs.rug.nl/edgedetectionweb/web/edgedetection_params.html
+	* Good visualization tool : http://www.cs.rug.nl/~imaging/simplecell.html
+	*
+	* NOTE: All filter params except .count must be in decimal form!, otherwise
+	* the libconfig will throw a SettingTypeException exception.
+	*/
+	filter: {
+		phases = (0.0,180.0,90.0,-90.0);                           /* on/off bar detectors*/
+		orientations = (0.0,45.0,90.0,135.0);
 		
-		/*
-		* Params controlling extrastriate regions
-		*
-		* Order is relevant, goes V2,V3,...
-		*
-		* dimensions                    = the side of a square region. MUST BE EVEN and increasing with layers                                                  classic: 32,32,32,32
-		* fanInRadius                   = radius of each gaussian connectivity cone betweene layers, only used with build command.                              classic: 6,6,9,12
-		* fanInCount                    = Number of connections into a neuron in V3 and above (connections from V1 to V2 have separate param: samplecount)      classic: 272,100,100,100
-		* learningRate                  = Learningrates used in hebbian&trace learning.                                                                         classic: 25,6.7,5.0,4.0
-		* etas                          = Etas used in trace learning in non V1 layers of discrete model, and used as time constant in continous model          classic: 0.8,0.8,0.8,0.8
-		* sparsenessLevel               = Sparsity levels used for setSparse routine.                                                                           classic: 0.992,0.98,0.88,0.91
-		* sigmoidSlope                  = Sigmoid slope used in sigmoid activation function.                                                                    classic: 190,40,75,26
-		* inhibitoryRadius              = Radius (sigma) parameter for inhibitory filter.                                                                       classic: 1.38,2.7,4.0,6.0
-		* inhibitoryContrast            = Contrast (sigma) parameter for inhibitory filter.                                                                     classic: 1.5,1.5,1.6,1.4
-		* inhibitoryWidth               = Size of each side of square inhibitory filter. MUST BE ODD.                                                           classic: 7,11,17,25
-		* saveOutput                    = Whether or not this region is outputted
-		*
-		* The following MUST be in decimal format: learningrate,eta,sparsenessLevel,sigmoidSlope,
-		*/
-		
-		extrastriate: (
+		/* lambda is a the param, count is the number of V2 projections from each wavelength (subsampling) */
+		/* Visnet values for count: 201,50,13,8 */
+		wavelengths = ( $wavelengths );
+	};
+};
+
+/*
+* Params controlling extrastriate regions
+*
+* Order is relevant, goes V2,V3,...
+*
+* dimensions                    = the side of a square region. MUST BE EVEN and increasing with layers                                                  classic: 32,32,32,32
+* fanInRadius                   = radius of each gaussian connectivity cone betweene layers, only used with build command.                              classic: 6,6,9,12
+* fanInCount                    = Number of connections into a neuron in V3 and above (connections from V1 to V2 have separate param: samplecount)      classic: 272,100,100,100
+* learningRate                  = Learningrates used in hebbian&trace learning.                                                                         classic: 25,6.7,5.0,4.0
+* etas                          = Etas used in trace learning in non V1 layers of discrete model, and used as time constant in continous model          classic: 0.8,0.8,0.8,0.8
+* sparsenessLevel               = Sparsity levels used for setSparse routine.                                                                           classic: 0.992,0.98,0.88,0.91
+* sigmoidSlope                  = Sigmoid slope used in sigmoid activation function.                                                                    classic: 190,40,75,26
+* inhibitoryRadius              = Radius (sigma) parameter for inhibitory filter.                                                                       classic: 1.38,2.7,4.0,6.0
+* inhibitoryContrast            = Contrast (sigma) parameter for inhibitory filter.                                                                     classic: 1.5,1.5,1.6,1.4
+* inhibitoryWidth               = Size of each side of square inhibitory filter. MUST BE ODD.                                                           classic: 7,11,17,25
+* saveOutput                    = Whether or not this region is outputted
+*
+* The following MUST be in decimal format: learningrate,eta,sparsenessLevel,sigmoidSlope,
+*/
+
+extrastriate: (
 TEMPLATE
-
-		#my $str = "";
 		
 		for my $region ( @esRegionSettings ) {
 			
 			my %tmp = %{ $region }; # <=== perl bullshit
 
-			$str .= "\n\t\t{\n";
-			$str .= "\t\tdimension         	= ". $tmp{"dimension"} .";\n";
-			$str .= "\t\tdepth             	= ". $tmp{"depth"} .";\n";
-			$str .= "\t\tfanInRadius       	= ". $tmp{"fanInRadius"} .";\n";
-			$str .= "\t\tfanInCount        	= ". $tmp{"fanInCount"} .";\n";
-			$str .= "\t\tlearningrate      	= ". $tmp{"learningrate"} .";\n";
-			$str .= "\t\teta               	= ". $tmp{"eta"} .";\n";
-			$str .= "\t\ttimeConstant		= ". $tmp{"timeConstant"} .";\n";
-			$str .= "\t\tsparsenessLevel   	= ". $tmp{"sparsenessLevel"} .";\n";
-			$str .= "\t\tsigmoidSlope      	= ". $tmp{"sigmoidSlope"} .";\n";
-			$str .= "\t\tinhibitoryRadius  	= ". $tmp{"inhibitoryRadius"} .";\n";
-			$str .= "\t\tinhibitoryContrast	= ". $tmp{"inhibitoryContrast"} .";\n";
-			$str .= "\t\tinhibitoryWidth   	= ". $tmp{"inhibitoryWidth"} .";\n";
-			$str .= "\t\t},";
+			$str .= "\n{\n";
+			$str .= "\tdimension         	= ". $tmp{"dimension"} .";\n";
+			$str .= "\tdepth             	= ". $tmp{"depth"} .";\n";
+			$str .= "\tfanInRadius       	= ". $tmp{"fanInRadius"} .";\n";
+			$str .= "\tfanInCount        	= ". $tmp{"fanInCount"} .";\n";
+			$str .= "\tlearningrate      	= ". $tmp{"learningrate"} .";\n";
+			$str .= "\teta               	= ". $tmp{"eta"} .";\n";
+			$str .= "\ttimeConstant		= ". $tmp{"timeConstant"} .";\n";
+			$str .= "\tsparsenessLevel   	= ". $tmp{"sparsenessLevel"} .";\n";
+			$str .= "\tsigmoidSlope      	= ". $tmp{"sigmoidSlope"} .";\n";
+			$str .= "\tinhibitoryRadius  	= ". $tmp{"inhibitoryRadius"} .";\n";
+			$str .= "\tinhibitoryContrast	= ". $tmp{"inhibitoryContrast"} .";\n";
+			$str .= "\tinhibitoryWidth   	= ". $tmp{"inhibitoryWidth"} .";\n";
+			$str .= "},";
 		}
         # Cut away last ',' and add on closing paranthesis and semi-colon
         chop($str);

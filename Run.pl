@@ -26,6 +26,7 @@
 	my $MATLAB 					= "/Volumes/Applications/MATLAB_R2010b.app/bin/matlab -nosplash -nodisplay"; # -nodesktop 
 	########################################################################################
 	
+	my $command;
 	if($#ARGV < 0) {
 
 		print "To few arguments passed.\n";
@@ -53,12 +54,10 @@
 	}
 	
 	my $experimentFolder 		= $BASE."Experiments/".$experiment."/";
+	my $parameterFile 			= $experimentFolder."Parameters.txt";
 	
 	# copy stuff into testing training folders
 	if($command eq "build") {
-		
-		$parameterFile = $experimentFolder."Parameters.txt";
-
         system($PROGRAM, "build", $parameterFile, $experimentFolder);
 
 	} else {
@@ -70,11 +69,14 @@
 	        die "No simulation name provided\n";
 		}
 		
+		my $simulationFolder 		= $experimentFolder.$simulation."/";
+		
 		if ($command eq "loadtest") {
 
 			# Add md5 test here
+			my $networkFile;
 			if($#ARGV >= 3) {
-				$networkFile = $experimentFolder.$ARGV[4];
+				$networkFile = $experimentFolder.$ARGV[3];
 			} else {
 				$networkFile = $experimentFolder."BlankNetwork.txt";
 			}
@@ -90,7 +92,6 @@
 			}
 			
 			my $stimuliFolder 			= $BASE."Stimuli/".$stimuli."/";
-			my $simulationFolder 		= $experimentFolder.$simulation."/";
 			my $parameterFile 			= $simulationFolder."Parameters.txt";
 	
 	        if($command eq "test") {
@@ -126,11 +127,11 @@
 	                
 	        } elsif($command eq "train") {
 	        	
-				$networkFile = "${experimentFolder}BlankNetwork.txt";
+				my $networkFile = "${experimentFolder}BlankNetwork.txt";
 				system($PROGRAM, $command, $parameterFile, $networkFile, "${experimentFolder}FileList.txt", "${stimuliFolder}Filtered/", $simulationFolder);
 				
 				# Cleanup
-				$destinationFolder = $simulationFolder."Training";
+				my $destinationFolder = $simulationFolder."Training";
 				
 				if(!(-d $destinationFolder)) {
 					print "Making result $destinationFolder \n";
@@ -150,13 +151,13 @@
 
 		my ($PROGRAM, $parameterFile, $net, $experimentFolder, $stimuliFolder, $simulationFolder) = @_;
 		
-		$networkFile = $simulationFolder.$net;
+		my $networkFile = $simulationFolder.$net;
 		
 		system($PROGRAM, "test", $parameterFile, $networkFile, "${experimentFolder}FileList.txt", "${stimuliFolder}Filtered/", $simulationFolder) == 0 or die "Could not execute simulator, or simulator returned 0";
 		
 		# Make result directory
-		$newFolder = substr $net, 0, length($net) - 4;
-		$destinationFolder = $simulationFolder.$newFolder;
+		my $newFolder = substr $net, 0, length($net) - 4;
+		my $destinationFolder = $simulationFolder.$newFolder;
 		
 	   	if(!(-d $destinationFolder)) {
 			print "Making result directory $destinationFolder \n";
