@@ -55,21 +55,21 @@
     
     # Make safe copy of experiment folder
 	print "Making backup of experiment folder...\n";
-	system("cp -r $experimentFolder $experimentFolderBackup") == 0 or die "Copying experiment folder $experimentFolder content into $experimentFolderBackup failed: $!";
+	system("cp -r $experimentFolder $experimentFolderBackup") == 0 or die "Copying experiment folder $experimentFolder content into $experimentFolderBackup failed: $!\n";
 	
     my $xgridResult = $BASE."/Xgrid/".$experiment."/";
     my $xgridResultBackup = $BASE."/Xgrid/".$experiment."_backup/";
     
 	# Make safe copy of xgrid result folder
 	print "Making backup of xgrid result folder...\n";
-	system("cp -r ${xgridResult} $xgridResultBackup") == 0 or die "Copying xgrid results $xgridResult content into $xgridResultBackup failed: $!";
+	system("cp -r ${xgridResult} $xgridResultBackup") == 0 or die "Copying xgrid results $xgridResult content into $xgridResultBackup failed: $!\n";
 
 	open (F, "${experimentFolder}simulations.txt") || die "Could not open ${experimentFolder}simulations.txt: $!\n";
-	@lines = <F>;
+	my @lines = <F>;
 	close F;
 	
 	# Move from result folder to xgrid working directory
-	system("mv ${xgridResult}* $experimentFolder") == 0 or die "Moving xgrid results $xgridResult content into $experimentFolder failed: $!";
+	system("mv ${xgridResult}* $experimentFolder") == 0 or die "Moving xgrid results $xgridResult content into $experimentFolder failed: $!\n";
 	
 	for(my $i = 0;$i < $#lines+1;$i++) {
 		
@@ -77,7 +77,7 @@
 		next if not (-d "${experimentFolder}${i}");
 		
 		# Get name of parameter file
-		$file = $lines[$i];
+		my $file = $lines[$i];
 		
 		# Check for trailing new line
 		chomp($file) if (substr($file, -1, 1) eq "\n");
@@ -86,25 +86,25 @@
 		print "****************************************************************************************************\n";
 		
 		# Move it into dir
-		move($experimentFolder.$file, "${experimentFolder}${i}/Parameters.txt") or die "Moving parameter file $file failed: $!";
+		move($experimentFolder.$file, "${experimentFolder}${i}/Parameters.txt") or die "Moving parameter file $file failed: $!\n";
 					
 		# Make /Training subdirectory
-		mkdir("${experimentFolder}${i}/Training") or die "Could not make training dir ${experimentFolder}${i}/Training dir: $!";
+		mkdir("${experimentFolder}${i}/Training") or die "Could not make training dir ${experimentFolder}${i}/Training dir: $!\n";
 		
 		# Untar result.tgz
-		system("tar -xjf ${experimentFolder}${i}/result.tbz -C ${experimentFolder}${i}") == 0 or die "Could not untar ${experimentFolder}${i}/result.tbz: $!";
+		system("tar -xjf ${experimentFolder}${i}/result.tbz -C ${experimentFolder}${i}") == 0 or die "Could not untar ${experimentFolder}${i}/result.tbz: $!\n";
 		
 		# Move results into /Training
-		system("mv ${experimentFolder}${i}/*.dat ${experimentFolder}${i}/Training") == 0 or die "Moving result files into training folder failed: $!";
+		system("mv ${experimentFolder}${i}/*.dat ${experimentFolder}${i}/Training") == 0 or die "Moving result files into training folder failed: $!\n";
 		
 		# Copy blank network into folder so that we can do control test automatically
 		my $blankNetworkSRC = $experimentFolder."BlankNetwork.txt";
 		my $blankNetworkDEST = $experimentFolder.$i."/BlankNetwork.txt";
-		copy($blankNetworkSRC, $blankNetworkDEST) or die "Copying blank network failed: $!";
+		copy($blankNetworkSRC, $blankNetworkDEST) or die "Copying blank network failed: $!\n";
 		
 		# Rename dir
-		$simulation = substr($file, 0, -4);
-		move($experimentFolder.$i, $experimentFolder.$simulation) or die "Renaming folder ${experimentFolder}${simulation} failed: $!";
+		my $simulation = substr($file, 0, -4);
+		move($experimentFolder.$i, $experimentFolder.$simulation) or die "Renaming folder ${experimentFolder}${simulation} failed: $!\n";
 		
 		# Run test
 		system($PERL_RUN_SCRIPT, "test", $experiment, $simulation, $stimuli);
