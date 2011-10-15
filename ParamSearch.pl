@@ -22,10 +22,12 @@
 	########################################################################################
 	my $BASE 					= "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/";  # must have trailing slash, "D:/Oxford/Work/Projects/"
 	########################################################################################
+	
 	my $experiment 				= "test";
-	my $stimuliTraining 		= "TR_2O_9T_2L";
-	my $stimuliTesting 			= "TR_2O_9T_2L"; 
+	my $stimuliTraining 		= "TR_2O_81T_16L";
+	my $stimuliTesting 			= "TR_2O_81T_16L"; 
 	my $xgrid 					= "0"; # "0" = false, "1" = true
+	
 	########################################################################################
 	my $PERL_RUN_SCRIPT 		= $BASE."Scripts/Run/Run.pl";
 	my $PROGRAM					= $BASE."Source/build/Release/VisBack";
@@ -76,10 +78,10 @@
 	# lambda=16 is CT
 	# YOU MUST CHANGE LAMBDA SO THAT SIMULATOR CAN FIND PROPER INPUT FILE NAME
 	
-    my $wavelengths						= "{lambda = 2; fanInCount = 201;}"; 
+    my $wavelengths						= "{lambda = 16; fanInCount = 201;}"; 
     
 	my $neuronType						= 0; # 0 = discrete, 1 = continuous
-    my $learningRule					= 0; # 0 = trace, 1 = hebb
+    my $learningRule					= 1; # 0 = trace, 1 = hebb
     
     my $nrOfEpochs						= 30;
     my $saveNetworkAtEpochMultiple 		= 99;
@@ -87,7 +89,7 @@
 	
     my $lateralInteraction				= 1; # 0 = none, 1 = COMP, 2 = SOM
     my $resetTrace						= "true"; # "false", Reset trace between objects of training
-    my $resetActivity					= "false"; # "false", Reset activation between objects of training
+    my $resetActivity					= "true"; # "false", Reset activation between objects of training
     
     # RANGE PARAMS - permutable
     # Notice, layer one needs 3x because of small filter magnitudes, and 5x because of
@@ -96,8 +98,7 @@
     									# Trace
     									#["5.0000"	,"0.5000"	,"0.5000"	,"0.5000"],
     									#["1.0000"	,"1.0000"	,"1.0000"	,"1.0000"]
-    									#["0.0000"	,"0.0000"	,"0.0000"	,"0.0000"]     									
-    									["0.1000"	,"0.0670"	,"0.0500"	,"0.0400"]
+    									#["0.0000"	,"0.0000"	,"0.0000"	,"0.0000"]     														
     									#["1.0000"	,"0.1000"	,"0.0010"	,"0.0010"]
     									
     									# CT
@@ -105,6 +106,10 @@
     									##["0.1000"	,"0.0100"	,"0.0100"	,"0.0010"],
     									##["0.1000"	,"0.0100"	,"0.0010"	,"0.0001"]
     									#["0.0100"	,"0.0010"	,"0.0001"	,"0.0001"]
+    									
+    									#["0.1000"	,"0.0670"	,"0.0500"	,"0.0400"],
+    									#["0.0100"	,"0.0067"	,"0.0050"	,"0.0040"],
+    									["0.0010"	,"0.00067"	,"0.0005"	,"0.0004"]
     									);
     									
  	die "Invalid array: learningRates" if !validateArray(\@learningRates);
@@ -113,9 +118,10 @@
     									# Trace
     									#["0.992"	,"0.980"	,"0.880"	,"0.800"],
     									#["0.992"	,"0.980"	,"0.880"	,"0.850"],
-    									["0.992"	,"0.980"	,"0.880"	,"0.910"]
+    									
+    									#["0.992"	,"0.980"	,"0.880"	,"0.910"],
     									#["0.992"	,"0.980"	,"0.880"	,"0.960"],
-    									#["0.992"	,"0.980"	,"0.880"	,"0.990"],
+    									["0.992"	,"0.980"	,"0.880"	,"0.990"]
     									
     									#["0.992"	,"0.900"	,"0.880"	,"0.800"],
     									#["0.992"	,"0.900"	,"0.880"	,"0.850"],
@@ -199,7 +205,7 @@
    	my @somInhibitoryRadius		= ("1.38","2.7","4.0","6.0");
     my @somInhibitoryContrast	= ("1.5","1.5","1.6","1.4");
     my @filterWidth				= (7,11,17,25);
-    my @epochs					= (50,50,50,50); #(50,150,200,200);
+    my @epochs					= (100,150,150,100); #(50,150,200,200);
     
     print "Uneven parameter length." if 
     	$pathWayLength != scalar(@dimension) || 
@@ -275,7 +281,7 @@
 			close (PARAMETER_FILE);
 			
 			# Run build command
-			system($PERL_RUN_SCRIPT, "build", $experiment);
+			system($PERL_RUN_SCRIPT, "build", $experiment) == 0 or exit;
 			
 			# Remove temporary file
 			unlink($tmpParameterFile);
@@ -327,7 +333,7 @@
 							print "Uneven parameter length found while permuting." if 
     							$pathWayLength != scalar(@learningRateArray) || 
     							$pathWayLength != scalar(@sparsityArray) || 
-    							$pathWayLength != scalar(@timeConstantArray) ||
+    							$pathWayLength != scalar(@timeConstantArray);
 							
 							# Smallest eta value, it is used with ssF
 							my $layerCounter = 0;
@@ -419,7 +425,7 @@
 								if(!(-d $simulationFolder)) {
 									
 									# Make simulation folder
-									print "Making new simulation folder: " . $simulationFolder . "\n";
+									#print "Making new simulation folder: " . $simulationFolder . "\n";
 									mkdir($simulationFolder, 0777) || print "$!\n";
 									
 									# Make parameter file and write to simulation folder
@@ -431,14 +437,14 @@
 									close (PARAMETER_FILE);
 									
 									# Run training
-									system($PERL_RUN_SCRIPT, "train", $experiment, $simulation, $stimuliTraining);
+									system($PERL_RUN_SCRIPT, "train", $experiment, $simulation, $stimuliTraining) == 0 or exit;
 									
 									# Copy blank network into folder so that we can do control test automatically
-									print "Copying blank network: ". $blankNetworkSRC . " \n";
+									#print "Copying blank network: ". $blankNetworkSRC . " \n";
 									copy($blankNetworkSRC, $blankNetworkDEST) or die "Copying blank network failed: $!\n";
 									
 									# Run test
-									system($PERL_RUN_SCRIPT, "test", $experiment, $simulation, $stimuliTesting);
+									system($PERL_RUN_SCRIPT, "test", $experiment, $simulation, $stimuliTesting) == 0 or exit;
 									
 								} else {
 									print "Could not make folder (already exists?): " . $simulationFolder . "\n";

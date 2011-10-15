@@ -58,7 +58,7 @@
 	
 	# copy stuff into testing training folders
 	if($command eq "build") {
-        system($PROGRAM, "build", $parameterFile, $experimentFolder);
+        system($PROGRAM, "build", $parameterFile, $experimentFolder) == 0 or die "Could not execute simulator, or simulator returned 0.\n";
 
 	} else {
 		
@@ -81,7 +81,7 @@
 				$networkFile = $experimentFolder."BlankNetwork.txt";
 			}
 			
-			system($PROGRAM, $command, $parameterFile, $networkFile, $simulationFolder);
+			system($PROGRAM, $command, $parameterFile, $networkFile, $simulationFolder) == 0 or die "Could not execute simulator, or simulator returned 0.\n";
         } else {
 		
 			my $stimuli;
@@ -119,22 +119,18 @@
 					}
 					
 					closedir(DIR);
-					
-					# WE DO NOT CALL THIS ANY MORE
-					# Call matlab to plot all
-					# system($MATLAB . " -r \"cd('$MATLAB_SCRIPT_FOLDER');plotSimulationRegionInvariance('$experiment','$simulation');\""); #	
 				}
 	                
 	        } elsif($command eq "train") {
 	        	
 				my $networkFile = "${experimentFolder}BlankNetwork.txt";
-				system($PROGRAM, $command, $parameterFile, $networkFile, "${experimentFolder}FileList.txt", "${stimuliFolder}Filtered/", $simulationFolder);
+				system($PROGRAM, $command, $parameterFile, $networkFile, "${stimuliFolder}FileList.txt", "${stimuliFolder}Filtered/", $simulationFolder) == 0 or die "Could not execute simulator, or simulator returned 0.\n";
 				
 				# Cleanup
 				my $destinationFolder = $simulationFolder."Training";
 				
 				if(!(-d $destinationFolder)) {
-					print "Making result $destinationFolder \n";
+					#print "Making result $destinationFolder \n";
 					mkdir($destinationFolder, 0777) || print $!;
 				} else {
 			    	die "Result directory already exists\n";
@@ -153,7 +149,7 @@
 		
 		my $networkFile = $simulationFolder.$net;
 		
-		system($PROGRAM, "test", $parameterFile, $networkFile, "${experimentFolder}FileList.txt", "${stimuliFolder}Filtered/", $simulationFolder) == 0 or die "Could not execute simulator, or simulator returned 0";
+		system($PROGRAM, "test", $parameterFile, $networkFile, "${stimuliFolder}FileList.txt", "${stimuliFolder}Filtered/", $simulationFolder) == 0 or die "Could not execute simulator, or simulator returned 0.\n";
 		
 		# Make result directory
 		my $newFolder = substr $net, 0, length($net) - 4;
