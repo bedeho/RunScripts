@@ -319,13 +319,18 @@
 					for my $l (@learningRates) {
 						for my $s (@sparsenessLevels) {
 							
+							# Layer spesific parameters
 							my @learningRateArray = @{ $l };
 							my @sparsityArray = @{ $s };
 							my @timeConstantArray = @{ $tC };
 							
-							my $layerCounter = 0;
+							print "Uneven parameter length found while permuting." if 
+    							$pathWayLength != scalar(@learningRateArray) || 
+    							$pathWayLength != scalar(@sparsityArray) || 
+    							$pathWayLength != scalar(@timeConstantArray) ||
 							
 							# Smallest eta value, it is used with ssF
+							my $layerCounter = 0;
 							my $minTc = LONG_MAX;
 							
 							for my $region ( @esRegionSettings ) {
