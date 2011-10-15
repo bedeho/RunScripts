@@ -22,45 +22,52 @@
 	########################################################################################
 	my $BASE 					= "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/";  # must have trailing slash, "D:/Oxford/Work/Projects/"
 	########################################################################################
+	my $experiment 				= "test";
+	my $stimuliTraining 		= "TR_2O_9T_2L";
+	my $stimuliTesting 			= "TR_2O_9T_2L"; 
+	my $xgrid 					= "0"; # "0" = false, "1" = true
+	########################################################################################
 	my $PERL_RUN_SCRIPT 		= $BASE."Scripts/Run/Run.pl";
 	my $PROGRAM					= $BASE."Source/build/Release/VisBack";
 	my $MATLAB_SCRIPT_FOLDER 	= $BASE."Scripts/Analysis/";  # must have trailing slash
 	my $MATLAB 					= "/Volumes/Applications/MATLAB_R2010b.app/bin/matlab -nosplash -nodisplay"; # -nodesktop
-	########################################################################################
-
-	if($#ARGV < 0) {
-
-		print "To few arguments passed.\n";
-		print "Usage:\n";
-		print "Arg. 1: experiment name\n";
-		print "Arg. 2: stimuli name\n";
-		print "Arg. 3: xgrid\n";
-		exit;
-	}
-	
-	my $experiment;
-	if($#ARGV >= 0) {
-        $experiment = $ARGV[0];
-	}
-	else {
-		die "No experiment name provided\n";
-	}
-	
-	my $stimuli;
-	if($#ARGV >= 1) {
-        $stimuli = $ARGV[1];
-	} else {
-        die "No stimuli name provided\n";
-	}
 	
 	my $experimentFolder 		= $BASE."Experiments/".$experiment."/";
 	my $sourceFolder			= $BASE."Source";	
-	my $stimuliFolder 			= $BASE."Stimuli/".$stimuli."/";
+	my $stimuliFolder 			= $BASE."Stimuli/".$stimuliTraining."/";
     my $xgridResult 			= $BASE."Xgrid/".$experiment."/";
     my $untrainedNet 			= $experimentFolder."BlankNetwork.txt";
-    
     my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+    ########################################################################################
+        
     
+	#$#ARGV >= 2 && $ARGV[2] eq "xgrid"
+	#
+	#if($#ARGV < 0) {
+	#
+	#	print "To few arguments passed.\n";
+	#	print "Usage:\n";
+	#	print "Arg. 1: experiment name\n";
+	#	print "Arg. 2: stimuli name\n";
+	#	print "Arg. 3: xgrid\n";
+	#	exit;
+	#}
+	#
+	#my $experiment;
+	#if($#ARGV >= 0) {
+    #    $experiment = $ARGV[0];
+	#}
+	#else {
+	#	die "No experiment name provided\n";
+	#}
+	#
+	#my $stimuli;
+	#if($#ARGV >= 1) {
+    #    $stimuli = $ARGV[1];
+	#} else {
+    #    die "No stimuli name provided\n";
+	#}
+	
     ################################################################################################################################################################################################
     ################################################################################################################################################################################################
 	
@@ -68,19 +75,17 @@
 	# lambda=2 is Trace
 	# lambda=16 is CT
 	# YOU MUST CHANGE LAMBDA SO THAT SIMULATOR CAN FIND PROPER INPUT FILE NAME
+	
     my $wavelengths						= "{lambda = 2; fanInCount = 201;}"; 
     
-	my $neuronType						= 1; # 0 = discrete, 1 = continuous
-    my $learningRule					= 1; # 0 = trace, 1 = hebb
-    
-    my $nrOfObjects						= 2;
-    my $nrOfTransformations				= 9;
+	my $neuronType						= 0; # 0 = discrete, 1 = continuous
+    my $learningRule					= 0; # 0 = trace, 1 = hebb
     
     my $nrOfEpochs						= 30;
     my $saveNetworkAtEpochMultiple 		= 99;
 	my $outputAtTimeStepMultiple		= 101;
 	
-    my $lateralInteraction				= "1"; # 0 = none, 1 = COMP, 2 = SOM
+    my $lateralInteraction				= 1; # 0 = none, 1 = COMP, 2 = SOM
     my $resetTrace						= "true"; # "false", Reset trace between objects of training
     my $resetActivity					= "false"; # "false", Reset activation between objects of training
     
@@ -253,10 +258,10 @@
 		# Make experiment folder
 		mkdir($experimentFolder);
 		
-		# Copy file list to experiment folder
-		copy($stimuliFolder."FileList.txt", $experimentFolder."FileList.txt") or die "Cannot make copy of file list: $!\n";
+		# Copy file list to experiment folder, if this is xgrid run
+		copy($stimuliFolder."FileList.txt", $experimentFolder."FileList.txt") or die "Cannot make copy of file list: $!\n" if ($#ARGV >= 2 && $ARGV[2] eq "xgrid");
 		
-		# Copy VisBack binary if this is xgrid run
+		# Copy VisBack binary, if this is xgrid run
         copy($PROGRAM, $experimentFolder."VisBack") or die "Cannot make copy of binary: $!\n" if ($#ARGV >= 2 && $ARGV[2] eq "xgrid");
 		
 		######################################
@@ -264,9 +269,9 @@
 		
 			# Make temporary parameter file
 			my $tmpParameterFile = $experimentFolder."Parameters.txt";
-			my $result = makeParameterFile(\@esRegionSettings, "0.1", "0.1", "0.1");
+			my $paramResult = makeParameterFile(\@esRegionSettings, "0.1", "0.1", "0.1");
 			open (PARAMETER_FILE, '>'.$tmpParameterFile) or die "Could not open file '$tmpParameterFile'. $!\n";
-			print PARAMETER_FILE $result;
+			print PARAMETER_FILE $paramResult;
 			close (PARAMETER_FILE);
 			
 			# Run build command
@@ -275,7 +280,7 @@
 			# Remove temporary file
 			unlink($tmpParameterFile);
 			
-			# Copy source of network
+			# Copy source code as backup
 			# Gives tons of error messages
 			#system "cp -R $sourceFolder ${BASE}Experiments/${experiment}" or die "Make source copy: $!\n";
 			
@@ -284,11 +289,8 @@
 	}
 
 	# Make xgrid file, simulation file, xgrid result folder
-    my $xgrid = 0;
-	if($#ARGV >= 2 && $ARGV[2] eq "xgrid") {
+	if($xgrid) {
 		
-        $xgrid = 1;
-        
         # Make xgrid file
         open (XGRID_FILE, '>'.$experimentFolder.'xgrid.txt') or die "Could not open file '${experimentFolder}xgrid.txt'. $!\n";
         print XGRID_FILE '-in '.substr($experimentFolder, 0, -1).' -files '.$stimuliFolder.'xgridPayload.tbz ';
@@ -424,14 +426,14 @@
 									close (PARAMETER_FILE);
 									
 									# Run training
-									system($PERL_RUN_SCRIPT, "train", $experiment, $simulation, $stimuli);
+									system($PERL_RUN_SCRIPT, "train", $experiment, $simulation, $stimuliTraining);
 									
 									# Copy blank network into folder so that we can do control test automatically
 									print "Copying blank network: ". $blankNetworkSRC . " \n";
 									copy($blankNetworkSRC, $blankNetworkDEST) or die "Copying blank network failed: $!\n";
 									
 									# Run test
-									system($PERL_RUN_SCRIPT, "test", $experiment, $simulation, $stimuli);
+									system($PERL_RUN_SCRIPT, "test", $experiment, $simulation, $stimuliTesting);
 									
 								} else {
 									print "Could not make folder (already exists?): " . $simulationFolder . "\n";
@@ -581,12 +583,12 @@ training: {
 	*/
 	saveNetwork = true;
 	saveNetworkAtEpochMultiple = $saveNetworkAtEpochMultiple;
-};
-
-stimuli: {
-	nrOfObjects = $nrOfObjects; /* Number of objects, is not used directly, but rather dumped into output files for matlab convenience */
-	nrOfTransformations = $nrOfTransformations; /* #transforms pr. object, is not used directly, but rather dumped into output files for matlab convenience  */
-	nrOfEpochs = $nrOfEpochs; /* An epoch is one run through the file list, and the number of epochs can be no less then 1 */
+	
+	/* 
+	* Only used in continouys models:
+	* An epoch is one run through the file list.
+	*/
+	nrOfEpochs = $nrOfEpochs; 
 };
 
 /*
