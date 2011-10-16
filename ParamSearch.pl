@@ -24,8 +24,8 @@
 	########################################################################################
 	
 	my $experiment 				= "test";
-	my $stimuliTraining 		= "TR_2O_81T_16L";
-	my $stimuliTesting 			= "TR_2O_81T_16L"; 
+	my $stimuliTraining 		= "CT_2O_81T_16L";
+	my $stimuliTesting 			= "CT_2O_81T_16L"; 
 	my $xgrid 					= "0"; # "0" = false, "1" = true
 	
 	########################################################################################
