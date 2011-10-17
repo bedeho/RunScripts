@@ -7,25 +7,15 @@
 	#  Created by Bedeho Mender on 29/04/11.
 	#  Copyright 2011 OFTNAI. All rights reserved.
 	#
-	
+
 	use strict;
     use warnings;
     use POSIX;
-
 	use File::Copy;
 	use Data::Dumper;
 	use Data::Compare;
+	use myConfig;
 
-	########################################################################################
-	# VARS
-	########################################################################################
-	my $BASE					= "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/";  # must have trailing slash, "D:/Oxford/Work/Projects/"
-	########################################################################################
-	my $PROGRAM					= $BASE."Source/build/Release/VisBack";
-	my $MATLAB_SCRIPT_FOLDER 	= $BASE."Scripts/Analysis/";  # must have trailing slash
-	my $MATLAB 					= "/Volumes/Applications/MATLAB_R2010b.app/bin/matlab -nosplash -nodisplay"; # -nodesktop 
-	########################################################################################
-	
 	my $command;
 	if($#ARGV < 0) {
 

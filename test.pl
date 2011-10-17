@@ -37,7 +37,32 @@
 	
 	
 	
-	
+		#$#ARGV >= 2 && $ARGV[2] eq "xgrid"
+	#
+	#if($#ARGV < 0) {
+	#
+	#	print "To few arguments passed.\n";
+	#	print "Usage:\n";
+	#	print "Arg. 1: experiment name\n";
+	#	print "Arg. 2: stimuli name\n";
+	#	print "Arg. 3: xgrid\n";
+	#	exit;
+	#}
+	#
+	#my $experiment;
+	#if($#ARGV >= 0) {
+    #    $experiment = $ARGV[0];
+	#}
+	#else {
+	#	die "No experiment name provided\n";
+	#}
+	#
+	#my $stimuli;
+	#if($#ARGV >= 1) {
+    #    $stimuli = $ARGV[1];
+	#} else {
+    #    die "No stimuli name provided\n";
+	#}
 	
 	
 	

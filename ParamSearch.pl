@@ -7,78 +7,27 @@
 	#  Created by Bedeho Mender on 29/04/11.
 	#  Copyright 2011 OFTNAI. All rights reserved.
 	#
-	
+
 	use strict;
     use warnings;
     use POSIX;
-
 	use File::Copy;
 	use Data::Dumper;
 	use Data::Compare;
 	use Cwd 'abs_path';
+	use myConfig;
 	
-	########################################################################################
-	# VARS
-	########################################################################################
-	my $BASE 					= "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/";  # must have trailing slash, "D:/Oxford/Work/Projects/"
-	########################################################################################
-	
-	my $experiment 				= "test";
-	my $stimuliTraining 		= "CT_2O_81T_16L";
-	my $stimuliTesting 			= "CT_2O_81T_16L"; 
-	my $xgrid 					= "0"; # "0" = false, "1" = true
-	
-	########################################################################################
-	my $PERL_RUN_SCRIPT 		= $BASE."Scripts/Run/Run.pl";
-	my $PROGRAM					= $BASE."Source/build/Release/VisBack";
-	my $MATLAB_SCRIPT_FOLDER 	= $BASE."Scripts/Analysis/";  # must have trailing slash
-	my $MATLAB 					= "/Volumes/Applications/MATLAB_R2010b.app/bin/matlab -nosplash -nodisplay"; # -nodesktop
-	
-	my $experimentFolder 		= $BASE."Experiments/".$experiment."/";
-	my $sourceFolder			= $BASE."Source";	
-	my $stimuliFolder 			= $BASE."Stimuli/".$stimuliTraining."/";
-    my $xgridResult 			= $BASE."Xgrid/".$experiment."/";
-    my $untrainedNet 			= $experimentFolder."BlankNetwork.txt";
-    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
-    ########################################################################################
-        
-    
-	#$#ARGV >= 2 && $ARGV[2] eq "xgrid"
-	#
-	#if($#ARGV < 0) {
-	#
-	#	print "To few arguments passed.\n";
-	#	print "Usage:\n";
-	#	print "Arg. 1: experiment name\n";
-	#	print "Arg. 2: stimuli name\n";
-	#	print "Arg. 3: xgrid\n";
-	#	exit;
-	#}
-	#
-	#my $experiment;
-	#if($#ARGV >= 0) {
-    #    $experiment = $ARGV[0];
-	#}
-	#else {
-	#	die "No experiment name provided\n";
-	#}
-	#
-	#my $stimuli;
-	#if($#ARGV >= 1) {
-    #    $stimuli = $ARGV[1];
-	#} else {
-    #    die "No stimuli name provided\n";
-	#}
-	
+	################################################################################################################################################################################################
+    # Input
     ################################################################################################################################################################################################
-    ################################################################################################################################################################################################
+	
+	my $experiment 						= "CTBen"; # , test
+	my $stimuliTraining 				= "projectBenTraining"; #projectBenTraining,TR_2O_9T_2L,CT_2O_81T_16L
+	my $stimuliTesting 					= "projectBenTesting"; #projectBenTesting, TR_2O_9T_2L
+	my $xgrid 							= "0"; # "0" = false, "1" = true
 	
 	# FIXED PARAMS - non permutable
-	# lambda=2 is Trace
-	# lambda=16 is CT
-	# YOU MUST CHANGE LAMBDA SO THAT SIMULATOR CAN FIND PROPER INPUT FILE NAME
-	
-    my $wavelengths						= "{lambda = 16; fanInCount = 201;}"; 
+    my $wavelengths						= "{lambda = 8; fanInCount = 201;}"; #lambda=2 is Trace, lambda=16 is CT
     
 	my $neuronType						= 0; # 0 = discrete, 1 = continuous
     my $learningRule					= 1; # 0 = trace, 1 = hebb
@@ -92,48 +41,57 @@
     my $resetActivity					= "true"; # "false", Reset activation between objects of training
     
     # RANGE PARAMS - permutable
+    
     # Notice, layer one needs 3x because of small filter magnitudes, and 5x because of
     # number of afferent synapses, total 15x.
-    my @learningRates 				= (
+    my @learningRates 					= (
     									# Trace
     									#["5.0000"	,"0.5000"	,"0.5000"	,"0.5000"],
-    									#["1.0000"	,"1.0000"	,"1.0000"	,"1.0000"]
+    									#["1.0000"	,"1.0000"	,"1.0000"	,"1.0000"],
     									#["0.0000"	,"0.0000"	,"0.0000"	,"0.0000"]     														
     									#["1.0000"	,"0.1000"	,"0.0010"	,"0.0010"]
     									
-    									# CT
-    									##["0.1000"	,"0.0100"	,"0.0100"	,"0.0100"],
-    									##["0.1000"	,"0.0100"	,"0.0100"	,"0.0010"],
-    									##["0.1000"	,"0.0100"	,"0.0010"	,"0.0001"]
-    									#["0.0100"	,"0.0010"	,"0.0001"	,"0.0001"]
+    									#["0.0005"	,"0.001"	,"0.001"	,"0.001"],
+    									#["0.0005"	,"0.001"	,"0.001"	,"0.001"]
     									
-    									["0.1000"	,"0.0670"	,"0.0500"	,"0.0400"],
-    									["0.0100"	,"0.0067"	,"0.0050"	,"0.0040"],
-    									["0.0010"	,"0.00067"	,"0.0005"	,"0.0004"]
+    									# CT
+    									#["0.1000"	,"0.0100"	,"0.0100"	,"0.0100"]
+    									#["0.1000"	,"0.0100"	,"0.0100"	,"0.0010"],
+    									#["0.1000"	,"0.0100"	,"0.0010"	,"0.0001"]
+    									["0.0100"	,"0.0010"	,"0.0001"	,"0.0001"]
+    									
+    									#["0.1000"	,"0.0670"	,"0.0500"	,"0.0400"]
+    									#["0.0100"	,"0.0067"	,"0.0050"	,"0.0040"],
+    									#["0.0010"	,"0.00067"	,"0.0005"	,"0.0004"]
     									);
     									
  	die "Invalid array: learningRates" if !validateArray(\@learningRates);
 
-    my @sparsenessLevels			= ( 
+    my @sparsenessLevels				= ( 
     									# Trace
     									#["0.992"	,"0.980"	,"0.880"	,"0.800"],
     									#["0.992"	,"0.980"	,"0.880"	,"0.850"],
     									
-    									["0.992"	,"0.980"	,"0.880"	,"0.910"],
-    									["0.992"	,"0.980"	,"0.880"	,"0.960"],
-    									["0.992"	,"0.980"	,"0.880"	,"0.990"],
+    									["0.90"	,"0.90"	,"0.90"	,"0.90"]
+    									#["0.960"	,"0.960"	,"0.960"	,"0.960"],
+    									#["0.970"	,"0.970"	,"0.970"	,"0.970"]
+    									
+    									
+    									
+    									
+    									#["0.992"	,"0.980"	,"0.880"	,"0.990"],
     									
     									#["0.992"	,"0.900"	,"0.880"	,"0.800"],
     									#["0.992"	,"0.900"	,"0.880"	,"0.850"],
-    									["0.992"	,"0.900"	,"0.880"	,"0.910"],
-    									["0.992"	,"0.900"	,"0.880"	,"0.960"],
-    									["0.992"	,"0.900"	,"0.880"	,"0.990"],
+    									#["0.992"	,"0.900"	,"0.880"	,"0.910"],
+    									#["0.992"	,"0.900"	,"0.880"	,"0.960"],
+    									#["0.992"	,"0.900"	,"0.880"	,"0.990"],
     									
     									###["0.992"	,"0.900"	,"0.800"	,"0.800"],
     									###["0.992"	,"0.900"	,"0.800"	,"0.850"],
     									###["0.992"	,"0.900"	,"0.800"	,"0.910"],
-    									["0.992"	,"0.900"	,"0.800"	,"0.960"],
-    									["0.992"	,"0.900"	,"0.800"	,"0.990"]
+    									#["0.992"	,"0.900"	,"0.800"	,"0.960"],
+    									#["0.992"	,"0.900"	,"0.800"	,"0.990"]
     									
     									#["0.992"	,"0.800"	,"0.700"	,"0.700"],
     									#["0.992"	,"0.800"	,"0.700"	,"0.800"],
@@ -154,7 +112,7 @@
     									);
     die "Invalid array: sparsenessLevels" if !validateArray(\@sparsenessLevels);
     
-    my @timeConstants				= ( 
+    my @timeConstants					= ( 
     									#["0.050"	,"0.050"	,"0.050"	,"0.050"]
     
     									# Trace
@@ -179,34 +137,39 @@
     									);
     die "Invalid array: timeConstants" if !validateArray(\@timeConstants);
     								
- 	my @timePrTransform				= ("0.150"); # TIME EACH TRANSFORM IS ACTIVE/USED AS INPUT
+ 	my @timePrTransform					= ("0.150"); # TIME EACH TRANSFORM IS ACTIVE/USED AS INPUT
  	die "Invalid array: timePrTransform" if !validateArray(\@timePrTransform);
  	
-    my @stepSizeFraction			= ("0.5"); #("3.00","2.00","1.00","0.500","0.100","0.050","0.02"); #,"0.050"); #, 0.1 = 1/10, 0.05 = 1/20, 0.02 = 1/50
+    my @stepSizeFraction				= ("0.5"); #("3.00","2.00","1.00","0.500","0.100","0.050","0.02"); #,"0.050"); #, 0.1 = 1/10, 0.05 = 1/20, 0.02 = 1/50
     die "Invalid array: stepSizeFraction" if !validateArray(\@stepSizeFraction);
     
-    my @traceTimeConstant			= ("1.500"); #("0.100", "0.050", "0.010")
+    my @traceTimeConstant				= ("1.500"); #("0.100", "0.050", "0.010")
 	die "Invalid array: traceTimeConstant" if !validateArray(\@traceTimeConstant);
 	
-    my $pathWayLength			= 4;
-    my @dimension				= (32,32,32,32);
-    my @depth					= (1,1,1,1);
-    my @fanInRadius 			= (6,6,9,12);
-    my @fanInCount 				= (100,100,100,100);
-    my @learningrate			= ("0.1","0.1","0.1","0.1"); # < === is permuted below
-    my @eta						= ("0.8","0.8","0.8","0.8");
-    my @timeConstant			= ("0.1","0.1","0.1","0.1"); # < === is permuted below
-    my @sparsenessLevel			= ("0.1","0.1","0.1","0.1"); # < === is permuted below
-    my @sigmoidSlope 			= ("190.0","40.0","75.0","26.0");
-    my @inhibitoryRadius		= ("1.38","2.7","4.0","6.0");
-    my @inhibitoryContrast		= ("1.5","1.5","1.6","1.4");
-   	my @somExcitatoryRadius		= ("0.7","0.55","0.4","0.6");
-    my @somExcitatoryContrast	= ("5.35","33.15","117.57","120.12");
-   	my @somInhibitoryRadius		= ("1.38","2.7","4.0","6.0");
-    my @somInhibitoryContrast	= ("1.5","1.5","1.6","1.4");
-    my @filterWidth				= (7,11,17,25);
-    my @epochs					= (100,150,150,100); #(50,150,200,200);
+    my $pathWayLength					= 4;
+    my @dimension						= (32,32,32,32);
+    my @depth							= (1,1,1,1);
+    my @fanInRadius 					= (6,6,9,12);
+    my @fanInCount 						= (100,100,100,100);
+    my @learningrate					= ("0.1","0.1","0.1","0.1"); # < === is permuted below
+    my @eta								= ("0.8","0.8","0.8","0.8");
+    my @timeConstant					= ("0.1","0.1","0.1","0.1"); # < === is permuted below
+    my @sparsenessLevel					= ("0.1","0.1","0.1","0.1"); # < === is permuted below
+    my @sigmoidSlope 					= ("190.0","40.0","75.0","26.0");
+    my @inhibitoryRadius				= ("1.38","2.7","4.0","6.0");
+    my @inhibitoryContrast				= ("1.5","1.5","1.6","1.4");
+   	my @somExcitatoryRadius				= ("0.7","0.55","0.4","0.6");
+    my @somExcitatoryContrast			= ("5.35","33.15","117.57","120.12");
+   	my @somInhibitoryRadius				= ("1.38","2.7","4.0","6.0");
+    my @somInhibitoryContrast			= ("1.5","1.5","1.6","1.4");
+    my @filterWidth						= (7,11,17,25);
+    my @epochs							= (10,10,10,10); #(50,150,200,200);
     
+    ################################################################################################################################################################################################
+    # Preprocessing
+    ################################################################################################################################################################################################
+    
+    # Do some validation
     print "Uneven parameter length." if 
     	$pathWayLength != scalar(@dimension) || 
     	$pathWayLength != scalar(@depth) || 
@@ -226,8 +189,7 @@
     	$pathWayLength != scalar(@filterWidth) ||
     	$pathWayLength != scalar(@epochs);
     
-    # Build template parameter file from these
-    	    	    	    	    	    
+    # Build template parameter file from these    	    	    	    	    
     my @esRegionSettings;
    	for(my $r = 0;$r < $pathWayLength;$r++) {
 
@@ -253,10 +215,16 @@
          push @esRegionSettings, \%region;
     }
     
-    ################################################################################################################################################################################################
-    ################################################################################################################################################################################################
-    
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
     my $firstTime = 1;
+    
+
+	
+	my $experimentFolder 		= $BASE."Experiments/".$experiment."/";
+	my $sourceFolder			= $BASE."Source";	
+	my $stimuliFolder 			= $BASE."Stimuli/".$stimuliTraining."/";
+    my $xgridResult 			= $BASE."Xgrid/".$experiment."/";
+    my $untrainedNet 			= $experimentFolder."BlankNetwork.txt";
     
     # Check if experiment folder exists
 	if(not -d $experimentFolder) {
@@ -316,6 +284,7 @@
     my $thisScript = abs_path($0);
 	copy($thisScript, $experimentFolder."ParametersCopy.pl") or die "Cannot make copy of parameter file: $!\n";
     ################################################################################################################################################################################################
+    # Permuting
     ################################################################################################################################################################################################
     
 	for my $tpT (@timePrTransform) {
