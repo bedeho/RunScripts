@@ -13,15 +13,15 @@
     use POSIX;
 	use File::Copy;
 	use Data::Dumper;
-	use Data::Compare;
 	use Cwd 'abs_path';
 	use myConfig;
+	use myLib;
 	
 	################################################################################################################################################################################################
     # Input
     ################################################################################################################################################################################################
 	
-	my $experiment 						= "CTBen"; # , test
+	my $experiment 						= "test"; # , test
 	my $stimuliTraining 				= "projectBenTraining"; #projectBenTraining,TR_2O_9T_2L,CT_2O_81T_16L
 	my $stimuliTesting 					= "projectBenTesting"; #projectBenTesting, TR_2O_9T_2L
 	my $xgrid 							= "0"; # "0" = false, "1" = true
@@ -218,8 +218,6 @@
     my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
     my $firstTime = 1;
     
-
-	
 	my $experimentFolder 		= $BASE."Experiments/".$experiment."/";
 	my $sourceFolder			= $BASE."Source";	
 	my $stimuliFolder 			= $BASE."Stimuli/".$stimuliTraining."/";
@@ -447,37 +445,6 @@
 		system($MATLAB . " -r \"cd('$MATLAB_SCRIPT_FOLDER');plotExperimentInvariance('$experiment');\"");	
 	}
 	
-	sub validateArray {
-		
-		my ($input) = @_;
-
-		my @arr = @{$input};
-		my $length = scalar (@arr);
-		
-	   	for(my $i = 0;$i < $length;$i++) {
-	   		for(my $j = 0;$j < $length;$j++) {
-	   			
-	   			# Dont compare with itself
-	   			next if ($i == $j);
-	   			
-	   			# Compare (supports both scalar and references)
-	   			return 0 if Compare($arr[$i], $arr[$j]);
-	    	}
-	    }
-
-		return 1;
-	}
-	
-	# http://www.somacon.com/p114.php
-	# Perl trim function to remove whitespace from the start and end of the string
-	sub trim($)
-	{
-		my $string = shift;
-		$string =~ s/^\s+//;
-		$string =~ s/\s+$//;
-		return $string;
-	}
-			
 	sub makeParameterFile {
 		
 		my ($a, $stepSizeFraction, $traceTimeConstant, $timePrTransform) = @_;

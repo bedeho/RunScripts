@@ -1,9 +1,49 @@
 #!/usr/bin/perl
 
-	use Data::Compare;
+	use strict;
+    use warnings;
+    
+    #my @e1 = (3,2);
+    #my @e2 = (3,9);
+    
+    my $a = 3;#\@e1;
+    my $b = 3;#\@e2;
 
-
-
+	print "equal\n" if compare( $a, $b);
+	
+	# Data::Compare, but it was impossible to install
+	# on lab machines.
+	# compare numbers or array of numbers
+	sub compare {
+		
+		my ($elm_1, $elm_2) = @_;
+		
+		die("incompatible types being compared.\n") if (ref($elm_1) ne ref($elm_2));
+			
+		if(ref($elm_1) eq 'ARRAY') {
+			my @arr_1 = @{$elm_1};
+			my @arr_2 = @{$elm_2};
+			
+			my $length_1 = scalar (@arr_1);
+			my $length_2 = scalar (@arr_2);
+			
+			die("unequal length.\n") if ($length_1 != $length_2);
+			
+			# compare two arrays
+		   	for(my $i = 0;$i < $length_1;$i++) {
+		   		return 0 if $arr_1[$i] != $arr_2[$i];
+		    }
+		    
+		    return 1;
+			
+		} else {
+			
+			# compare scalars
+			return $elm_1 == $elm_2;
+		}
+	}
+	
+	exit;
 
 	#use File::Copy;
 	#use Data::Dumper;
@@ -144,9 +184,9 @@
 	########################################################################################
 	
 	# office
-	$PROJECTS_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/";  # must have trailing slash
-	$PERL_RUN_SCRIPT = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/RunScripts/Run.pl";
-	$SLASH = "/";
+	#$PROJECTS_FOLDER = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/";  # must have trailing slash
+	#$PERL_RUN_SCRIPT = "/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/RunScripts/Run.pl";
+	#$SLASH = "/";
 	
 	# laptop
 	# $PROJECTS_FOLDER = "D:/Oxford/Work/Projects/";  # must have trailing slash
@@ -157,52 +197,51 @@
 	
 
 	
-	system("mv","/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/Simulations/1Object/_E10_T4_Ti4_Itrue_RTtrue_L0.01_S0.65/*.dat","/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/Simulations/1Object/_E10_T4_Ti4_Itrue_RTtrue_L0.01_S0.65/BlankNetwork");
+	#system("mv","/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/Simulations/1Object/_E10_T4_Ti4_Itrue_RTtrue_L0.01_S0.65/*.dat","/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/Simulations/1Object/_E10_T4_Ti4_Itrue_RTtrue_L0.01_S0.65/BlankNetwork");
 	
-	exit
 	
-	open (TMP, '>test.txt');
+	#open (TMP, '>test.txt');
 	
-	for(my $i = 0;$i < 360;$i++) {
-		print TMP "$i\n";
-	}
+	#for(my $i = 0;$i < 360;$i++) {
+	#	print TMP "$i\n";
+	#}
 	
-	close(TMP);
-	exit;
+	#close(TMP);
+	#exit;
 	
-	if($#ARGV >= 0) {
-        print $ARGV[0];
-	}
+	#if($#ARGV >= 0) {
+    #    print $ARGV[0];
+	#}
 	
-	exit;
+	#exit;
 
-	$a = 33;
-	$b = 88;
+	#$a = 33;
+	#$b = 88;
 	
-	print "$a hello$b";
+	#print "$a hello$b";
 	
-	exit;
-	my @files =  glob("/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/RunScripts/*.pl");
+	#exit;
+	#my @files =  glob("/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/RunScripts/*.pl");
 
-	print $files[0];
+	#print $files[0];
 
-	exit;
+	#exit;
 	
-	my $dir = '/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/Simulations/1Object/_E400_T4_L0.01_S0.99';
+	#my $dir = '/Network/Servers/mac0.cns.ox.ac.uk/Volumes/Data/Users/mender/Dphil/Projects/VisBack/Simulations/1Object/_E400_T4_L0.01_S0.99';
 	
-	opendir(DIR, $dir) or die $!;
+	#opendir(DIR, $dir) or die $!;
 	
-	while (my $file = readdir(DIR)) {
+	#while (my $file = readdir(DIR)) {
 	
 		# We only want files
-		next unless (-d "$dir/$file");
+	#	next unless (-d "$dir/$file");
 		
 		# Use a regular expression to find files ending in .txt
-		next unless ($file =~ m/Network/);
+	#	next unless ($file =~ m/Network/);
 		
 		#$z = substr $file, 0, length($file) - 4;
 		
-		print "$file\n";
-	}
+	#	print "$file\n";
+	#}
 	
-	closedir(DIR);
+	#closedir(DIR);
