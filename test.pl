@@ -1,39 +1,44 @@
 #!/usr/bin/perl
 
-	use File::Copy;
-	use Data::Dumper;
-	use POSIX;
+	use Data::Compare;
+
+
+
+
+	#use File::Copy;
+	#use Data::Dumper;
+	#use POSIX;
 	
 	
-	print LONG_MAX;
+	#print LONG_MAX;
 	
-	exit;
-	
-	
-	print floor(34.56) if 4==4;
-	
-	exit;
-	
-	$f = 33;
-	use Term::ReadKey; 
-	ReadMode 'cbreak'; 
-	$key = ReadKey(0); 
-	ReadMode 'normal';
+	#exit;
 	
 	
+	#print floor(34.56) if 4==4;
+	
+	#exit;
+	
+	#$f = 33;
+	#use Term::ReadKey; 
+	#ReadMode 'cbreak'; 
+	#$key = ReadKey(0); 
+	#ReadMode 'normal';
 	
 	
-	exit;
 	
-	@test = (1,2,3,4,5,6,6,555);
 	
-	$str = "@test";
+	#exit;
 	
-	$str =~ s/\s/-/g;
+	#@test = (1,2,3,4,5,6,6,555);
 	
-	print $str;
+	#$str = "@test";
+	
+	#$str =~ s/\s/-/g;
+	
+	#print $str;
 	#print Dumper(@test);
-	exit;
+	#exit;
 	
 	
 	

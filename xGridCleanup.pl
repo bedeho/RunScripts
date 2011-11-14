@@ -13,7 +13,6 @@
     use POSIX;
 	use File::Copy;
 	use Data::Dumper;
-	use Data::Compare;
 	use myConfig;
 
 	if($#ARGV < 0) {
