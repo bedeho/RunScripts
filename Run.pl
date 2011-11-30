@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 	#
-	#  ParamSearch.pl
+	#  Run.pl
 	#  VisBack
 	#
 	#  Created by Bedeho Mender on 29/04/11.

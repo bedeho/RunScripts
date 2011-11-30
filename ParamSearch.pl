@@ -234,7 +234,7 @@
 		copy($stimuliFolder."FileList.txt", $experimentFolder."FileList.txt") or die "Cannot make copy of file list: $!\n" if ($#ARGV >= 2 && $ARGV[2] eq "xgrid");
 		
 		# Copy VisBack binary, if this is xgrid run
-        copy($PROGRAM, $experimentFolder."VisBack") or die "Cannot make copy of binary: $!\n" if ($#ARGV >= 2 && $ARGV[2] eq "xgrid");
+        copy($PROGRAM, $experimentFolder."VisBack") or die "Cannot make copy of binary: $!\n" if ($xgrid);
 		
 		######################################
 		# Make blank network #################
