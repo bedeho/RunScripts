@@ -12,6 +12,7 @@
     use warnings;
     use POSIX;
 	use File::Copy;
+	use File::Copy "cp"; # allows us to copy while preserving permissions, important when copying binary to keep it executable
 	use Data::Dumper;
 	use Cwd 'abs_path';
 	use myConfig;
@@ -28,9 +29,11 @@
 	
 	# FIXED PARAMS - non permutable
     my $wavelengths						= "{lambda = 8; fanInCount = 201;}"; #lambda=2 is Trace, lambda=16 is CT
+    my $phases							= "0.0,180.0,90.0,-90.0";
+    my $orientations					= "0.0,45.0,90.0,135.0";
     
 	my $neuronType						= 0; # 0 = discrete, 1 = continuous
-    my $learningRule					= 1; # 0 = trace, 1 = hebb
+    my $learningRule					= 0; # 0 = trace, 1 = hebb
     
     my $nrOfEpochs						= 30;
     my $saveNetworkAtEpochMultiple 		= 99;
@@ -147,6 +150,7 @@
 	die "Invalid array: traceTimeConstant" if !validateArray(\@traceTimeConstant);
 	
     my $pathWayLength					= 4;
+    my $v1Dimension						= 128;
     my @dimension						= (32,32,32,32);
     my @depth							= (1,1,1,1);
     my @fanInRadius 					= (6,6,9,12);
@@ -223,45 +227,53 @@
 	my $stimuliFolder 			= $BASE."Stimuli/".$stimuliTraining."/";
     my $xgridResult 			= $BASE."Xgrid/".$experiment."/";
     my $untrainedNet 			= $experimentFolder."BlankNetwork.txt";
-    
-    # Check if experiment folder exists
-	if(not -d $experimentFolder) {
-		
-		# Make experiment folder
-		mkdir($experimentFolder);
-		
-		# Copy file list to experiment folder, if this is xgrid run
-		copy($stimuliFolder."FileList.txt", $experimentFolder."FileList.txt") or die "Cannot make copy of file list: $!\n" if ($#ARGV >= 2 && $ARGV[2] eq "xgrid");
-		
-		# Copy VisBack binary, if this is xgrid run
-        copy($PROGRAM, $experimentFolder."VisBack") or die "Cannot make copy of binary: $!\n" if ($xgrid);
-		
-		######################################
-		# Make blank network #################
-		
-			# Make temporary parameter file
-			my $tmpParameterFile = $experimentFolder."Parameters.txt";
-			my $paramResult = makeParameterFile(\@esRegionSettings, "0.1", "0.1", "0.1");
-			open (PARAMETER_FILE, '>'.$tmpParameterFile) or die "Could not open file '$tmpParameterFile'. $!\n";
-			print PARAMETER_FILE $paramResult;
-			close (PARAMETER_FILE);
-			
-			# Run build command
-			system($PERL_RUN_SCRIPT, "build", $experiment) == 0 or exit;
-			
-			# Remove temporary file
-			unlink($tmpParameterFile);
-			
-			# Copy source code as backup
-			# Gives tons of error messages
-			#system "cp -R $sourceFolder ${BASE}Experiments/${experiment}" or die "Make source copy: $!\n";
-			
-		# Make blank network #################
-		######################################
-	}
 
-	# Make xgrid file, simulation file, xgrid result folder
+	# Check if experiment folder exists
+	if(-d $experimentFolder) {
+		
+		print "Experiment folder already exists, do you want to remove it ? (y/n): ";
+		my $input = <STDIN>;
+		chomp($input); # remove trailing CR
+
+		if($input eq "y") {
+			system("rm -r $experimentFolder");
+		} else {
+			die("Well played.\n"); 
+		}
+	}
+    
+	# Make experiment folder
+	mkdir($experimentFolder);
+	
+	# Make blank network #################
+	
+		# Make temporary parameter file
+		my $tmpParameterFile = $experimentFolder."Parameters.txt";
+		my $paramResult = makeParameterFile(\@esRegionSettings, "0.1", "0.1", "0.1");
+		open (PARAMETER_FILE, '>'.$tmpParameterFile) or die "Could not open file '$tmpParameterFile'. $!\n";
+		print PARAMETER_FILE $paramResult;
+		close (PARAMETER_FILE);
+		
+		# Run build command
+		system($PERL_RUN_SCRIPT, "build", $experiment) == 0 or exit;
+		
+		# Remove temporary file
+		unlink($tmpParameterFile);
+		
+		# Copy source code as backup
+		# Gives tons of error messages
+		#system "cp -R $sourceFolder ${BASE}Experiments/${experiment}" or die "Make source copy: $!\n";
+		
+	# Make blank network #################
+
+	# Prepare for xgird
 	if($xgrid) {
+		
+		# Copy file list to experiment folder
+		cp($stimuliFolder."FileList.txt", $experimentFolder."FileList.txt") or die "Cannot make copy of file list: $!\n";
+
+		# Copybinary, if this is xgrid run
+		cp($PROGRAM, $experimentFolder."VisBack") or die "Cannot make copy of binary: $!\n";
 		
         # Make xgrid file
         open (XGRID_FILE, '>'.$experimentFolder.'xgrid.txt') or die "Could not open file '${experimentFolder}xgrid.txt'. $!\n";
@@ -269,18 +281,15 @@
         
         # Make simulation file
         open (SIMULATIONS_FILE, '>'.$experimentFolder.'simulations.txt') or die "Could not open file '${experimentFolder}simulations.txt'. $!\n";
-        
-        # Only do on making folder ?
-        ## Copy VisBack binary
-        ##copy($PROGRAM, $experimentFolder."VisBack") or die "Cannot make copy of binary: $!\n";
-                
+                        
         # Make result directory
         mkdir($xgridResult);
 	}
 	
-	# Copy blank network into folder so that we can do control test automatically
+	# Make copy of this script as summary of parameter space explored
     my $thisScript = abs_path($0);
-	copy($thisScript, $experimentFolder."ParametersCopy.pl") or die "Cannot make copy of parameter file: $!\n";
+	cp($thisScript, $experimentFolder."ParametersCopy.pl") or die "Cannot make copy of parameter file: $!\n";
+	
     ################################################################################################################################################################################################
     # Permuting
     ################################################################################################################################################################################################
@@ -408,7 +417,7 @@
 									
 									# Copy blank network into folder so that we can do control test automatically
 									#print "Copying blank network: ". $blankNetworkSRC . " \n";
-									copy($blankNetworkSRC, $blankNetworkDEST) or die "Copying blank network failed: $!\n";
+									cp($blankNetworkSRC, $blankNetworkDEST) or die "Copying blank network failed: $!\n";
 									
 									# Run test
 									system($PERL_RUN_SCRIPT, "test", $experiment, $simulation, $stimuliTesting) == 0 or exit;
@@ -585,7 +594,7 @@ lateralInteraction = $lateralInteraction;
 seed = 55;
 
 v1: {
-	dimension = 128; /* Classic value: 128 */
+	dimension = $v1Dimension; /* Classic value: 128 */
 	
 	/*
 	* The next values are for the parameter values used by the Gabor filter that produced the input to this netwok,
@@ -598,8 +607,8 @@ v1: {
 	* the libconfig will throw a SettingTypeException exception.
 	*/
 	filter: {
-		phases = (0.0,180.0,90.0,-90.0);                           /* on/off bar detectors*/
-		orientations = (0.0,45.0,90.0,135.0);
+		phases = ($phases);                           /* on/off bar detectors*/
+		orientations = ($orientations);
 		
 		/* lambda is a the param, count is the number of V2 projections from each wavelength (subsampling) */
 		/* Visnet values for count: 201,50,13,8 */
